@@ -16,7 +16,7 @@ export function createIncomingMessage({
     const now = Date.now();
 
     return {
-        id: now,
+        id: crypto.randomUUID(),
         senderId,
         content,
         time: new Date(now).toLocaleTimeString("vi-VN", {
@@ -42,13 +42,9 @@ export function generateAutoReply({
         message.includes("thanks")
     ) {
         content = "You're welcome! Happy to help.";
-    } else if (
-        message.includes("how are you")
-    ) {
+    } else if (message.includes("how are you")) {
         content = "I'm doing great! How about you?";
-    } else if (
-        message.includes("project")
-    ) {
+    } else if (message.includes("project")) {
         content = "That sounds interesting! How is your project going?";
     } else {
         const defaultReplies = [
