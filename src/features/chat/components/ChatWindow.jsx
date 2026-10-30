@@ -12,6 +12,34 @@ import {
     MessageCirclePlus,
 } from "lucide-react";
 
+function getDateKey(timestamp) {
+    const date = new Date(timestamp);
+
+    return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+}
+
+function formatMessageDate(timestamp) {
+    const messageDate = new Date(timestamp);
+    const today = new Date();
+
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+
+    if (getDateKey(messageDate.getTime()) === getDateKey(today.getTime())) {
+        return "Today";
+    }
+
+    if (getDateKey(messageDate.getTime()) === getDateKey(yesterday.getTime())) {
+        return "Yesterday";
+    }
+
+    return messageDate.toLocaleDateString("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+    });
+}
+
 function ChatWindow({
     conversation,
     messages,
@@ -28,6 +56,21 @@ function ChatWindow({
     const [selectedSenderId, setSelectedSenderId] = useState("");
 
     const messagesEndRef = useRef(null);
+
+    const groupedMessages = messages.reduce((groups, item) => {
+        const dateKey = getDateKey(item.sentAt);
+
+        if (!groups[dateKey]) {
+            groups[dateKey] = {
+                date: item.sentAt,
+                messages: [],
+            };
+        }
+
+        groups[dateKey].messages.push(item);
+
+        return groups;
+    }, {});
 
     const messageInputRef = useRef(null);
 
@@ -200,45 +243,46 @@ function ChatWindow({
 
             <section className="message-container">
 
-                <div className="message-date">
-                    <span>Today</span>
-                </div>
+                {Object.entries(groupedMessages).map(([dateKey, group]) => (
+                    <div className="message-group" key={dateKey}>
 
-                {messages.map((item) => {
-
-                    const isMine = item.senderId === currentUser.id;
-
-                    return (
-                        <div
-                            key={item.id}
-                            className={`message-row ${
-                                isMine ? "message-mine" : "message-theirs"
-                            }`}
-                        >
-
-                            {!isMine && (
-                                <img
-                                    className="message-avatar"
-                                    src={conversation.avatar}
-                                    alt={conversation.name}
-                                />
-                            )}
-
-                            <div className="message-content">
-
-                                <div className="message-bubble">
-                                    {item.content}
-                                </div>
-
-                                <span className="message-time">
-                                    {item.time}
-                                </span>
-
-                            </div>
-
+                        <div className="message-date">
+                            <span>{formatMessageDate(group.date)}</span>
                         </div>
-                    );
-                })}
+
+                        {group.messages.map((item) => {
+                            const isMine = item.senderId === currentUser.id;
+
+                            return (
+                                <div
+                                    key={item.id}
+                                    className={`message-row ${
+                                        isMine ? "message-mine" : "message-theirs"
+                                    }`}
+                                >
+                                    {!isMine && (
+                                        <img
+                                            className="message-avatar"
+                                            src={conversation.avatar}
+                                            alt={conversation.name}
+                                        />
+                                    )}
+
+                                    <div className="message-content">
+                                        <div className="message-bubble">
+                                            {item.content}
+                                        </div>
+
+                                        <span className="message-time">
+                                            {item.time}
+                                        </span>
+                                    </div>
+                                </div>
+                            );
+                        })}
+
+                    </div>
+                ))}
 
                 <div ref={messagesEndRef}></div>
 
