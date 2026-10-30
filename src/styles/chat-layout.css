@@ -1379,3 +1379,11 @@ textarea:focus-visible {
 .mobile-back-button:hover {
     background: var(--color-border);
 }
+
+.message-group {
+    display: flex;
+    flex-direction: column;
+    gap: 19px;
+    width: 100%;
+    min-width: 0;
+}
