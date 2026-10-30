@@ -875,3 +875,362 @@ textarea:focus-visible {
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+.label-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(3px);
+}
+
+.label-modal {
+    width: 100%;
+    max-width: 430px;
+    max-height: 85vh;
+
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+
+    padding: 22px;
+
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+
+    background: var(--color-conversation);
+    color: var(--color-text);
+
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+.label-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+
+    margin-bottom: 22px;
+}
+
+.label-modal-header h3 {
+    font-size: 18px;
+    font-weight: 650;
+}
+
+.label-modal-header p {
+    margin-top: 5px;
+
+    font-size: 12px;
+    color: var(--color-text-secondary);
+}
+
+.label-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    padding: 15px;
+
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+
+    background: var(--color-chat);
+}
+
+.label-form h4,
+.label-list-header h4 {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.label-form > input {
+    width: 100%;
+    height: 40px;
+
+    padding: 0 12px;
+
+    border: 1px solid var(--color-border);
+    border-radius: 7px;
+
+    background: var(--color-surface);
+    color: var(--color-text);
+
+    font-size: 12px;
+}
+
+.label-color-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.label-color-row label {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+}
+
+.label-color-row input {
+    width: 42px;
+    height: 30px;
+
+    padding: 2px;
+
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+
+    background: var(--color-surface);
+    cursor: pointer;
+}
+
+.label-error {
+    font-size: 11px;
+    color: var(--color-danger);
+}
+
+.label-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.label-save-button,
+.label-cancel-button {
+    min-height: 35px;
+
+    padding: 0 13px;
+
+    border-radius: 7px;
+
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.label-save-button {
+    background: var(--color-primary);
+    color: white;
+}
+
+.label-save-button:hover {
+    background: var(--color-primary-hover);
+}
+
+.label-cancel-button {
+    background: var(--color-surface);
+    color: var(--color-text-secondary);
+}
+
+.label-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin: 22px 0 10px;
+}
+
+.label-list-header span {
+    font-size: 10px;
+    color: var(--color-text-muted);
+}
+
+.label-manager-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.label-manager-item {
+    min-height: 43px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 5px 8px;
+
+    border-radius: 8px;
+}
+
+.label-manager-item:hover {
+    background: var(--color-surface-hover);
+}
+
+.label-manager-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    font-size: 12px;
+}
+
+.label-color-dot {
+    width: 11px;
+    height: 11px;
+
+    border-radius: 50%;
+}
+
+.label-manager-actions {
+    display: flex;
+    gap: 3px;
+}
+
+.label-delete-button:hover {
+    color: var(--color-danger);
+}
+
+.empty-label-list {
+    padding: 18px 8px;
+
+    text-align: center;
+
+    font-size: 12px;
+    color: var(--color-text-muted);
+}
+
+.conversation-label-filters {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.conversation-label-filters::-webkit-scrollbar {
+    display: none;
+}
+
+.label-filter-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    padding: 6px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
+    background: var(--color-surface);
+    color: var(--color-text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.label-filter-button:hover {
+    background: var(--color-surface-hover);
+}
+
+.label-filter-button.active {
+    border-color: var(--color-label, var(--color-primary));
+    background: var(--color-primary);
+    color: white;
+}
+
+.label-filter-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--label-color);
+}
+
+.conversation-item-wrapper {
+    position: relative;
+}
+
+.conversation-label-action {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.2s ease;
+}
+
+.conversation-item-wrapper:hover .conversation-label-action {
+    opacity: 1;
+}
+
+.conversation-label-action:hover {
+    background: var(--color-surface-hover);
+    color: var(--color-primary);
+}
+
+.conversation-label-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    width: fit-content;
+    margin-top: 6px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--label-color) 15%, transparent);
+    color: var(--label-color);
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.conversation-label-dot {
+    width: 7px;
+    height: 7px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--label-color);
+}
+
+.conversation-label-menu {
+    position: absolute;
+    top: calc(100% - 5px);
+    right: 10px;
+    z-index: 20;
+    width: 180px;
+    max-height: 240px;
+    overflow-y: auto;
+    padding: 6px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: var(--color-surface);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.conversation-label-menu-title {
+    padding: 8px 10px;
+    color: var(--color-text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.conversation-label-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 9px 10px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--color-text);
+    text-align: left;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.conversation-label-option:hover,
+.conversation-label-option.selected {
+    background: var(--color-surface-hover);
+}
