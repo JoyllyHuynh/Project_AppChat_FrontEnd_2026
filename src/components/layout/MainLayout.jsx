@@ -65,6 +65,11 @@ function MainLayout() {
         );
     };
 
+    const handleBackToConversationList = () => {
+        activeIdRef.current = null;
+        setActiveId(null);
+    };
+
     const handleSendMessage = (content) => {
         const trimmedContent = content.trim();
 
@@ -281,7 +286,7 @@ function MainLayout() {
     };
 
     return (
-        <div className="app-container">
+        <div className={`app-container ${activeId ? "mobile-chat-open" : ""}`}>
 
             
             <Sidebar />
@@ -308,6 +313,7 @@ function MainLayout() {
                 onSendMessage={handleSendMessage}
                 onSimulateIncoming={handleSimulateIncoming}
                 conversations={conversations}
+                onBack={handleBackToConversationList}
             />
 
         </div>
