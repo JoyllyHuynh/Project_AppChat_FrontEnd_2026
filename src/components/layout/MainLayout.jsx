@@ -1,21 +1,50 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Sidebar from "./Sidebar";
 import ConversationList from "../../features/chat/components/ConversationList";
 import ChatWindow from "../../features/chat/components/ChatWindow";
 import {getReplyDelay,createIncomingMessage,generateAutoReply,generateIncomingContent} from "../../features/chat/services/chatMockService";
 import {currentUser,conversations as initialConversations,initialMessages,} from "../../services/mock/chatData";
+import {getConversationLabels,saveConversationLabels,generateLabelId,} from "../../features/chat/services/conversationLabelService";
 
 function MainLayout() {
 
-    const [conversations, setConversations] = useState(
-        initialConversations
-    );
+    const [conversations, setConversations] = useState(() => {
+        try {
+            const savedConversations = localStorage.getItem(
+                "webchat_conversations"
+            );
+
+            return savedConversations
+                ? JSON.parse(savedConversations)
+                : initialConversations;
+        } catch (error) {
+            console.error("Cannot load conversations:", error);
+            return initialConversations;
+        }
+    });
 
     const [activeId, setActiveId] = useState(null);
 
     const activeIdRef = useRef(activeId);
 
     const [messages, setMessages] = useState(initialMessages);
+
+    const [labels, setLabels] = useState(() => getConversationLabels());
+
+    useEffect(() => {
+        saveConversationLabels(labels);
+    }, [labels]);
+
+    useEffect(() => {
+        try {
+            localStorage.setItem(
+                "webchat_conversations",
+                JSON.stringify(conversations)
+            );
+        } catch (error) {
+            console.error("Cannot save conversations:", error);
+        }
+    }, [conversations]);
 
     const activeConversation = conversations.find(
         (item) => item.id === activeId
@@ -34,6 +63,11 @@ function MainLayout() {
                     : item
             )
         );
+    };
+
+    const handleBackToConversationList = () => {
+        activeIdRef.current = null;
+        setActiveId(null);
     };
 
     const handleSendMessage = (content) => {
@@ -175,8 +209,84 @@ function MainLayout() {
         });
     };
 
+    const handleCreateLabel = (name, color) => {
+        const trimmedName = name.trim();
+
+        if (!trimmedName) return false;
+
+        const isDuplicate = labels.some(
+            (label) =>
+                label.name.toLocaleLowerCase("vi") ===
+                trimmedName.toLocaleLowerCase("vi")
+        );
+
+        if (isDuplicate) return false;
+
+        const newLabel = {
+            id: generateLabelId(),
+            name: trimmedName,
+            color,
+        };
+
+        setLabels((prev) => [...prev, newLabel]);
+
+        return true;
+    };
+
+    const handleUpdateLabel = (id, name, color) => {
+        const trimmedName = name.trim();
+
+        if (!trimmedName) return false;
+
+        const isDuplicate = labels.some(
+            (label) =>
+                label.id !== id &&
+                label.name.toLocaleLowerCase("vi") ===
+                trimmedName.toLocaleLowerCase("vi")
+        );
+
+        if (isDuplicate) return false;
+
+        setLabels((prev) =>
+            prev.map((label) =>
+                label.id === id
+                    ? { ...label, name: trimmedName, color }
+                    : label
+            )
+        );
+
+        return true;
+    };
+
+    const handleDeleteLabel = (id) => {
+        setLabels((prev) =>
+            prev.filter((label) => label.id !== id)
+        );
+
+        setConversations((prev) =>
+            prev.map((conversation) =>
+                conversation.labelId === id
+                    ? { ...conversation, labelId: null }
+                    : conversation
+            )
+        );
+    };
+
+    const handleAssignLabel = (conversationId, labelId) => {
+        setConversations((prev) =>
+            prev.map((conversation) =>
+                conversation.id === conversationId
+                    ? {
+                        ...conversation,
+                        labelId: labelId,
+                    }
+                    : conversation
+            )
+        );
+    };
+
     return (
-        <div className="app-container">
+        <div className={`app-container ${activeId ? "mobile-chat-open" : ""}`}>
 
             
             <Sidebar />
@@ -186,6 +296,13 @@ function MainLayout() {
                 conversations={conversations}
                 activeId={activeId}
                 onSelect={handleSelectConversation}
+
+                labels={labels}
+
+                onCreateLabel={handleCreateLabel}
+                onUpdateLabel={handleUpdateLabel}
+                onDeleteLabel={handleDeleteLabel}
+                onAssignLabel={handleAssignLabel}
             />
 
             
@@ -196,6 +313,7 @@ function MainLayout() {
                 onSendMessage={handleSendMessage}
                 onSimulateIncoming={handleSimulateIncoming}
                 conversations={conversations}
+                onBack={handleBackToConversationList}
             />
 
         </div>
