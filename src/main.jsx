@@ -10,6 +10,8 @@ import { store } from "./app/store";
 import App from "./App";
 
 import "./styles/global.css";
+import './styles/common.css';
+import './styles/pages.css';
 
 ReactDOM.createRoot(
     document.getElementById("root")
