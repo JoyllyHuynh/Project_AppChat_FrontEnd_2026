@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
+    ArrowLeft,
     Phone,
     Video,
     MoreHorizontal,
@@ -18,6 +19,7 @@ function ChatWindow({
     onSendMessage,
     onSimulateIncoming,
     conversations,
+    onBack,
 }) {   
     const [message, setMessage] = useState("");
 
@@ -26,6 +28,8 @@ function ChatWindow({
     const [selectedSenderId, setSelectedSenderId] = useState("");
 
     const messagesEndRef = useRef(null);
+
+    const messageInputRef = useRef(null);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({
@@ -40,6 +44,23 @@ function ChatWindow({
 
         onSendMessage(content);
         setMessage("");
+
+        if (messageInputRef.current) {
+            messageInputRef.current.style.height = "auto";
+        }
+    };
+
+    const handleMessageChange = (e) => {
+        const value = e.target.value;
+
+        setMessage(value);
+
+        e.target.style.height = "auto";
+
+        e.target.style.height = `${Math.min(
+            e.target.scrollHeight,
+            100
+        )}px`;
     };
 
     const handleKeyDown = (e) => {
@@ -74,10 +95,17 @@ function ChatWindow({
         <main className="chat-window">
 
             <header className="chat-header">
+                <button
+                    type="button"
+                    className="mobile-back-button"
+                    title="Back to conversations"
+                    onClick={onBack}
+                >
+                    <ArrowLeft size={21} />
+                </button>
 
                 <div className="chat-user-info">
-
-                    <div className="conversation-avatar">
+                    <div className="chat-header-avatar">
                         <img
                             src={conversation.avatar}
                             alt={conversation.name}
@@ -88,44 +116,53 @@ function ChatWindow({
                         )}
                     </div>
 
-                    <div>
-                        <h3>{conversation.name}</h3>
+                    <div className="chat-user-details">
+                        <h3 title={conversation.name}>
+                            {conversation.name}
+                        </h3>
 
                         <p>
-                            <span
-                                className={`status-dot ${
-                                    conversation.status
-                                }`}
-                            ></span>
-
                             {conversation.status === "online"
                                 ? "Active now"
                                 : "Offline"}
                         </p>
                     </div>
-
                 </div>
 
                 <div className="chat-header-actions">
-
-                    <button className="icon-button" title="Voice call">
+                    <button
+                        type="button"
+                        className="icon-button"
+                        title="Voice call"
+                    >
                         <Phone size={19} />
                     </button>
 
-                    <button className="icon-button" title="Video call">
+                    <button
+                        type="button"
+                        className="icon-button"
+                        title="Video call"
+                    >
                         <Video size={20} />
                     </button>
 
-                    <button className="icon-button" title="More">
+                    <button
+                        type="button"
+                        className="icon-button"
+                        title="More"
+                    >
                         <MoreHorizontal size={21} />
                     </button>
 
-                    <button className="icon-button" title="Simulate incoming message" onClick={() => setShowSenderPicker((prev) => !prev)}>
+                    <button
+                        type="button"
+                        className="icon-button"
+                        title="Simulate incoming message"
+                        onClick={() => setShowSenderPicker((prev) => !prev)}
+                    >
                         <MessageCirclePlus size={19} />
                     </button>
-
                 </div>
-
             </header>
 
             {showSenderPicker && (
@@ -228,9 +265,10 @@ function ChatWindow({
                 <div className="chat-input-box">
 
                     <textarea
+                        ref={messageInputRef}
                         placeholder="Type your message..."
                         value={message}
-                        onChange={(e) => setMessage(e.target.value)}
+                        onChange={handleMessageChange}
                         onKeyDown={handleKeyDown}
                         rows={1}
                     />

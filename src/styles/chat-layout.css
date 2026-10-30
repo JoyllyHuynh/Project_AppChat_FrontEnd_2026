@@ -503,12 +503,12 @@ textarea:focus-visible {
 .chat-header {
     height: 82px;
     min-height: 82px;
-
     padding: 0 28px;
 
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 16px;
 
     background: var(--color-conversation);
     border-bottom: 1px solid var(--color-border);
@@ -518,6 +518,51 @@ textarea:focus-visible {
     display: flex;
     align-items: center;
     gap: 13px;
+    min-width: 0;
+}
+
+.chat-header-avatar {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+}
+
+.chat-header-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.chat-header-avatar .online-indicator {
+    position: absolute;
+    right: 0;
+    bottom: 1px;
+}
+
+.chat-user-details {
+    min-width: 0;
+}
+
+.chat-user-details h3 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.chat-user-details p {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--color-text-secondary);
 }
 
 .chat-user-info h3 {
@@ -533,9 +578,16 @@ textarea:focus-visible {
 }
 
 .chat-header-actions {
-    gap: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
 }
 
+.chat-header-actions .icon-button {
+    width: 36px;
+    height: 36px;
+}
 
 .message-container {
     flex: 1;
@@ -543,11 +595,12 @@ textarea:focus-visible {
 
     display: flex;
     flex-direction: column;
-    gap: 19px;
+    gap: 14px;
 
     padding: 25px 30px;
 
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .message-date {
@@ -574,7 +627,9 @@ textarea:focus-visible {
     align-items: flex-end;
     gap: 9px;
 
+    width: fit-content;
     max-width: 75%;
+    min-width: 0;
 }
 
 .message-mine {
@@ -589,7 +644,7 @@ textarea:focus-visible {
 .message-avatar {
     width: 29px;
     height: 29px;
-
+    flex-shrink: 0;
     border-radius: 50%;
     object-fit: cover;
 }
@@ -606,14 +661,17 @@ textarea:focus-visible {
 .message-bubble {
     width: fit-content;
     min-width: 80px;
-    max-width: min(580px, 70vw);
+    max-width: 100%;
+
+    box-sizing: border-box;
 
     padding: 11px 15px;
     border-radius: 12px;
+
     font-size: 13px;
     line-height: 1.6;
 
-    overflow-wrap: break-word;
+    overflow-wrap: anywhere;
     white-space: pre-wrap;
 }
 
@@ -645,6 +703,7 @@ textarea:focus-visible {
 .chat-input-area {
     padding: 12px 28px 20px;
     background: var(--color-chat);
+    flex-shrink: 0;
 }
 
 .chat-input-toolbar {
@@ -655,6 +714,7 @@ textarea:focus-visible {
 
 .chat-input-box {
     min-height: 54px;
+    box-sizing: border-box;
 
     display: flex;
     align-items: center;
@@ -662,7 +722,7 @@ textarea:focus-visible {
 
     padding: 8px 10px 8px 16px;
 
-    border: 1px solid #354151;
+    border: 1px solid var(--color-border);
     border-radius: 10px;
 
     background: var(--color-conversation);
@@ -678,14 +738,17 @@ textarea:focus-visible {
     flex: 1;
     min-width: 0;
     max-height: 100px;
+    height: auto;
 
     resize: none;
     outline: none;
     border: none;
+    overflow-y: auto;
 
     background: transparent;
     color: var(--color-text);
 
+    font-family: inherit;
     font-size: 13px;
     line-height: 1.5;
 }
@@ -694,22 +757,34 @@ textarea:focus-visible {
     color: var(--color-text-muted);
 }
 
+.chat-input-box .icon-button {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
 .send-button {
     width: 36px;
     height: 36px;
     min-width: 36px;
+    flex-shrink: 0;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
+    border: none;
     border-radius: 9px;
 
     background: var(--color-primary);
     color: #ffffff;
 
-    transition: background 0.18s ease;
+    cursor: pointer;
+    transition: background 0.18s ease, opacity 0.18s ease;
 }
 
 .send-button:hover:not(:disabled) {
@@ -717,7 +792,7 @@ textarea:focus-visible {
 }
 
 .send-button:disabled {
-    opacity: 0.4;
+    opacity: 0.5;
     cursor: not-allowed;
 }
 
@@ -799,8 +874,20 @@ textarea:focus-visible {
         --sidebar-width: 60px;
     }
 
-    .conversation-panel {
+    .app-container:not(.mobile-chat-open) .conversation-panel {
+        display: flex;
+    }
+
+    .app-container:not(.mobile-chat-open) .chat-window {
         display: none;
+    }
+
+    .app-container.mobile-chat-open .conversation-panel {
+        display: none;
+    }
+
+    .app-container.mobile-chat-open .chat-window {
+        display: flex;
     }
 
     .chat-header {
@@ -825,6 +912,24 @@ textarea:focus-visible {
 
     .message-bubble {
         font-size: 12px;
+    }
+
+    .mobile-back-button {
+    display: flex;
+    }
+
+    .chat-header {
+        justify-content: flex-start;
+        gap: 10px;
+    }
+
+    .chat-user-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .chat-header-actions {
+        flex-shrink: 0;
     }
 }
 
@@ -1233,4 +1338,44 @@ textarea:focus-visible {
 .conversation-label-option:hover,
 .conversation-label-option.selected {
     background: var(--color-surface-hover);
+}
+
+@media (max-width: 768px) {
+    .message-container {
+        padding: 18px 14px;
+        gap: 16px;
+    }
+
+    .message-row {
+        max-width: 90%;
+    }
+
+    .message-avatar {
+        width: 26px;
+        height: 26px;
+    }
+
+    .message-bubble {
+        min-width: 60px;
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+}
+
+.mobile-back-button {
+    display: none;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--color-text);
+    cursor: pointer;
+}
+
+.mobile-back-button:hover {
+    background: var(--color-border);
 }
