@@ -1,8 +1,5 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import "./styles/global.css";
-import "./styles/chat-layout.css";
-
 import { Provider } from "react-redux";
 import { BrowserRouter } from "react-router-dom";
 
@@ -11,6 +8,8 @@ import App from "./App";
 
 import "./styles/global.css";
 import './styles/common.css';
+import './styles/auth.css';
+import "./styles/chat-layout.css";
 import './styles/pages.css';
 
 ReactDOM.createRoot(
