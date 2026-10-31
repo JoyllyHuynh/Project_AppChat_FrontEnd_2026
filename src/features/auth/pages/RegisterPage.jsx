@@ -1,18 +1,33 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { Lock, Mail, User, UserPlus } from 'lucide-react';
 import AuthLayout from '../components/AuthLayout';
 import FormField from '../../../components/common/FormField';
+import { clearAuthFeedback, register } from '../../../store/authSlice';
+import { validateRegister } from '../../../utils/validators';
 
 export default function RegisterPage() {
+    const dispatch = useDispatch();
+    const { loading, error } = useSelector((s) => s.auth);
     const [form, setForm] = useState({ fullName: '', email: '', password: '', confirmPassword: '', agree: false });
     const [errors, setErrors] = useState({});
 
+    useEffect(() => {
+        dispatch(clearAuthFeedback());
+    }, [dispatch]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         setForm((p) => ({ ...p, [name]: type === 'checkbox' ? checked : value }));
         setErrors((p) => ({ ...p, [name]: undefined }));
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        const v = validateRegister(form);
+        setErrors(v);
+        if (Object.keys(v).length === 0) dispatch(register(form));
     };
 
     return (
@@ -25,7 +40,7 @@ export default function RegisterPage() {
                 </>
             }
         >
-            <form className="auth-form" noValidate>
+            <form className="auth-form" onSubmit={handleSubmit} noValidate>
                 <FormField label="Full name" icon={User} name="fullName" autoComplete="name" placeholder="Ma Nguyen Vu" value={form.fullName} onChange={handleChange} error={errors.fullName} />
                 <FormField label="Email" icon={Mail} name="email" type="email" autoComplete="email" placeholder="you@example.com" value={form.email} onChange={handleChange} error={errors.email} />
                 <FormField label="Password" icon={Lock} name="password" type="password" autoComplete="new-password" placeholder="At least 6 characters" value={form.password} onChange={handleChange} error={errors.password} />
