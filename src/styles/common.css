@@ -1,20 +1,9 @@
 :root {
-    --bg-main: #171C26;
-    --bg-sidebar: #151B25;
-    --bg-panel: #1B2330;
-    --bg-bubble: #282F39;
-    --bg-input: #131822;
-    --primary: #3B82F6;
-    --primary-hover: #2563EB;
-    --text: #F8FAFC;
-    --text-muted: #94A3B8;
-    --border: #303A48;
-    --success: #22C55E;
-    --danger: #EF4444;
     --radius: 14px;
     --radius-sm: 8px;
     font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
+
 * {
     box-sizing: border-box;
 }

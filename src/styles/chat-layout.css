@@ -1,30 +1,3 @@
-:root {
-    --color-sidebar: #151a23;
-    --color-conversation: #1b222e;
-    --color-chat: #171d27;
-
-    --color-surface: #222b38;
-    --color-surface-hover: #293443;
-    --color-surface-active: #29394f;
-
-    --color-primary: #4778b8;
-    --color-primary-hover: #5689ca;
-
-    --color-text: #e5e9f0;
-    --color-text-secondary: #a0aaba;
-    --color-text-muted: #778496;
-
-    --color-online: #55b982;
-    --color-danger: #e45b63;
-
-    --color-border: #2b3543;
-
-    --sidebar-width: 76px;
-    --conversation-width: 350px;
-}
-
-
-
 * {
     margin: 0;
     padding: 0;
@@ -137,8 +110,8 @@ textarea:focus-visible {
 }
 
 .nav-item.active {
-    background: #263b58;
-    color: #8ebaff;
+    background: var(--color-surface-active);
+    color: var(--color-primary);
 }
 
 .notification-dot {
@@ -304,8 +277,7 @@ textarea:focus-visible {
 
     margin: 0 16px 15px;
     padding: 0 13px;
-
-    border: 1px solid #303b4a;
+    border: 1px solid var(--color-border);
     border-radius: 8px;
 
     background: var(--color-surface);
@@ -352,12 +324,12 @@ textarea:focus-visible {
 .conversation-list::-webkit-scrollbar-thumb,
 .message-container::-webkit-scrollbar-thumb {
     border-radius: 10px;
-    background: #3a4656;
+    background: var(--color-scrollbar);
 }
 
 .conversation-list::-webkit-scrollbar-thumb:hover,
 .message-container::-webkit-scrollbar-thumb:hover {
-    background: #526176;
+    background: var(--color-scrollbar-hover);
 }
 
 .conversation-item {
@@ -387,7 +359,7 @@ textarea:focus-visible {
 
 .conversation-item.selected {
     background: var(--color-surface-active);
-    border-left: 3px solid #6d9bd2;
+    border-left: 3px solid var(--color-primary);
     border-radius: 5px 8px 8px 5px;
 }
 
@@ -676,18 +648,18 @@ textarea:focus-visible {
 }
 
 .message-theirs .message-bubble {
-    background: #252e3b;
+    background: var(--color-message-received);
     color: var(--color-text);
 
-    border: 1px solid #303a48;
+    border: 1px solid var(--color-border);
     border-bottom-left-radius: 4px;
 }
 
 .message-mine .message-bubble {
-    background: #365f91;
-    color: #f4f7fb;
+    background: var(--color-message-sent);
+    color: var(--color-message-sent-text);
 
-    border: 1px solid #416d9f;
+    border: 1px solid var(--color-message-sent);
     border-bottom-right-radius: 4px;
 }
 
@@ -992,7 +964,7 @@ textarea:focus-visible {
 
     padding: 20px;
 
-    background: rgba(0, 0, 0, 0.65);
+    background: var(--color-modal-overlay);
     backdrop-filter: blur(3px);
 }
 
@@ -1386,4 +1358,82 @@ textarea:focus-visible {
     gap: 19px;
     width: 100%;
     min-width: 0;
+}
+
+.theme-toggle {
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.theme-toggle:hover {
+    background: var(--color-surface-hover);
+    color: var(--color-primary);
+}
+
+.theme-toggle:active {
+    transform: scale(0.92);
+}
+
+.conversation-item {
+    min-height: 0;
+    padding: 9px 10px;
+    gap: 10px;
+}
+
+.conversation-avatar {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+}
+
+.conversation-bottom {
+    margin-top: 4px;
+}
+
+.conversation-top h4 {
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+.conversation-bottom p {
+    font-size: 11px;
+    line-height: 1.35;
+}
+
+.conversation-label-badge {
+    margin-top: 4px;
+    padding: 2px 7px;
+    gap: 4px;
+    font-size: 10px;
+}
+
+.conversation-label-dot {
+    width: 6px;
+    height: 6px;
+}
+
+.conversation-item-wrapper {
+    margin-bottom: 2px;
+}
+
+.sidebar .nav-item {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+}
+
+.sidebar-nav {
+    gap: 13px;
+}
+
+.sidebar-bottom {
+    gap: 16px;
+}
+
+.sidebar-avatar {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
 }
