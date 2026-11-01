@@ -8,6 +8,25 @@ import {getConversationLabels,saveConversationLabels,generateLabelId,} from "../
 
 function MainLayout() {
 
+    const [theme, setTheme] = useState(() => {
+        const savedTheme = localStorage.getItem("webchat_theme");
+
+        return savedTheme === "light" || savedTheme === "dark"
+            ? savedTheme
+            : "dark";
+    });
+
+    useEffect(() => {
+        document.documentElement.setAttribute("data-theme", theme);
+        localStorage.setItem("webchat_theme", theme);
+    }, [theme]);
+
+    const handleToggleTheme = () => {
+        setTheme((prevTheme) =>
+            prevTheme === "dark" ? "light" : "dark"
+        );
+    };
+
     const [conversations, setConversations] = useState(() => {
         try {
             const savedConversations = localStorage.getItem(
@@ -288,9 +307,10 @@ function MainLayout() {
     return (
         <div className={`app-container ${activeId ? "mobile-chat-open" : ""}`}>
 
-            
-            <Sidebar />
-
+            <Sidebar
+                theme={theme}
+                onToggleTheme={handleToggleTheme}
+            />
             
             <ConversationList
                 conversations={conversations}
