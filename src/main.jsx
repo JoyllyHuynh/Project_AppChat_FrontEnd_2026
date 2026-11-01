@@ -11,6 +11,7 @@ import './styles/common.css';
 import './styles/auth.css';
 import "./styles/chat-layout.css";
 import './styles/pages.css';
+import "./styles/themes.css";
 
 ReactDOM.createRoot(
     document.getElementById("root")

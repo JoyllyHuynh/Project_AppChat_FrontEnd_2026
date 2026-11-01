@@ -15,8 +15,9 @@ body,
 
 body {
     font-family: 'Inter', sans-serif;
-    background: #0f172a;
-    color: #f8fafc;
+    background: var(--bg-main);
+    color: var(--text);
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 button,

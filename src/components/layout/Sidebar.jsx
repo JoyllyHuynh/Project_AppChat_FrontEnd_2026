@@ -6,9 +6,11 @@ import {
     Settings,
     LogOut,
     Hexagon,
+    Sun,
+    Moon,
 } from "lucide-react";
 
-function Sidebar() {
+function Sidebar({ theme, onToggleTheme }) {
     return (
         <aside className="sidebar">
 
@@ -40,6 +42,19 @@ function Sidebar() {
             </nav>
 
             <div className="sidebar-bottom">
+
+                <button
+                    className="nav-item theme-toggle"
+                    onClick={onToggleTheme}
+                    title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                    aria-label={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                >
+                    {theme === "dark" ? (
+                        <Sun size={22} />
+                    ) : (
+                        <Moon size={22} />
+                    )}
+                </button>
 
                 <button className="nav-item" title="Settings">
                     <Settings size={22} />
