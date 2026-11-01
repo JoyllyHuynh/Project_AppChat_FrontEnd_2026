@@ -6,9 +6,14 @@ import {
     Settings,
     LogOut,
     Hexagon,
+    Sun,
+    Moon,
 } from "lucide-react";
+import { useDispatch } from "react-redux";
+import { logout } from '../../store/authSlice';
 
-function Sidebar() {
+function Sidebar({ theme, onToggleTheme }) {
+    const dispatch = useDispatch();
     return (
         <aside className="sidebar">
 
@@ -41,8 +46,29 @@ function Sidebar() {
 
             <div className="sidebar-bottom">
 
+                <button
+                    className="nav-item theme-toggle"
+                    onClick={onToggleTheme}
+                    title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                    aria-label={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                >
+                    {theme === "dark" ? (
+                        <Sun size={22} />
+                    ) : (
+                        <Moon size={22} />
+                    )}
+                </button>
+
                 <button className="nav-item" title="Settings">
                     <Settings size={22} />
+                </button>
+
+                <button
+                    className="nav-item"
+                    title="Log out"
+                    aria-label="Log out"
+                    onClick={() => dispatch(logout())}>
+                    <LogOut size={22} />
                 </button>
 
                 <div className="sidebar-divider"></div>
@@ -58,7 +84,9 @@ function Sidebar() {
             </div>
 
         </aside>
+
     );
+
 }
 
 export default Sidebar;
