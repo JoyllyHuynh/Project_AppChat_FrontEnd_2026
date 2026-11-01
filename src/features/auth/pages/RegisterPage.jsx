@@ -6,6 +6,7 @@ import AuthLayout from '../components/AuthLayout';
 import FormField from '../../../components/common/FormField';
 import { clearAuthFeedback, register } from '../../../store/authSlice';
 import { validateRegister } from '../../../utils/validators';
+import Alert from '../../../components/common/Alert';
 
 export default function RegisterPage() {
     const dispatch = useDispatch();
@@ -41,6 +42,7 @@ export default function RegisterPage() {
             }
         >
             <form className="auth-form" onSubmit={handleSubmit} noValidate>
+                <Alert>{error}</Alert>
                 <FormField label="Full name" icon={User} name="fullName" autoComplete="name" placeholder="Ma Nguyen Vu" value={form.fullName} onChange={handleChange} error={errors.fullName} />
                 <FormField label="Email" icon={Mail} name="email" type="email" autoComplete="email" placeholder="you@example.com" value={form.email} onChange={handleChange} error={errors.email} />
                 <FormField label="Password" icon={Lock} name="password" type="password" autoComplete="new-password" placeholder="At least 6 characters" value={form.password} onChange={handleChange} error={errors.password} />
