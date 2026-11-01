@@ -9,8 +9,11 @@ import {
     Sun,
     Moon,
 } from "lucide-react";
+import { useDispatch } from "react-redux";
+import { logout } from '../../store/authSlice';
 
 function Sidebar({ theme, onToggleTheme }) {
+    const dispatch = useDispatch();
     return (
         <aside className="sidebar">
 
@@ -60,6 +63,14 @@ function Sidebar({ theme, onToggleTheme }) {
                     <Settings size={22} />
                 </button>
 
+                <button
+                    className="nav-item"
+                    title="Log out"
+                    aria-label="Log out"
+                    onClick={() => dispatch(logout())}>
+                    <LogOut size={22} />
+                </button>
+
                 <div className="sidebar-divider"></div>
 
                 <button className="sidebar-avatar" title="Profile">
@@ -73,7 +84,9 @@ function Sidebar({ theme, onToggleTheme }) {
             </div>
 
         </aside>
+
     );
+
 }
 
 export default Sidebar;

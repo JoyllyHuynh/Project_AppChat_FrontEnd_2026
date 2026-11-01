@@ -40,40 +40,44 @@ const authSlice = createSlice({
                     s.loading = true;
                     s.error = null;
                 })
-                .addCase(thunk.fulfilled, (s) => {
-                    s.loading = false;
-                })
                 .addCase(thunk.rejected, (s, a) => {
                     s.loading = false;
                     s.error = a.payload;
                 });
         });
-        builder
-            .addCase(login.fulfilled, (s, a) => {
-                s.user = a.payload;
-            })
-            .addCase(register.fulfilled, (s, a) => {
-                s.user = a.payload;
-            })
-            .addCase(logout.fulfilled, (s) => {
-                s.user = null;
-            });
 
         [updateProfile, changePassword].forEach((thunk) => {
             builder
                 .addCase(thunk.pending, (s) => {
                     s.saving = true;
                 })
-                .addCase(thunk.fulfilled, (s) => {
-                    s.saving = false;
-                })
                 .addCase(thunk.rejected, (s) => {
                     s.saving = false;
                 });
         });
+
         builder
-            .addCase(updateProfile.fulfilled, (s, a) => {
+            .addCase(login.fulfilled, (s, a) => {
+                s.loading = false;
                 s.user = a.payload;
+            })
+            .addCase(register.fulfilled, (s, a) => {
+                s.loading = false;
+                s.user = a.payload;
+            })
+            .addCase(logout.fulfilled, (s) => {
+                s.loading = false;
+                s.user = null;
+            })
+            .addCase(forgotPassword.fulfilled, (s) => {
+                s.loading = false;
+            })
+            .addCase(updateProfile.fulfilled, (s, a) => {
+                s.saving = false;
+                s.user = a.payload;
+            })
+            .addCase(changePassword.fulfilled, (s) => {
+                s.saving = false;
             })
             .addCase(setUserStatus.fulfilled, (s, a) => {
                 s.user = a.payload;

@@ -5,6 +5,7 @@
     --color-sidebar: #ffffff;
     --color-conversation: #ffffff;
     --color-chat: #f8fafc;
+    --color-on-primary: #ffffff;
 
     --color-surface: #f1f5f9;
     --color-surface-hover: #e8eef5;
@@ -44,6 +45,8 @@
 
     --color-scrollbar: #cbd5e1;
     --color-scrollbar-hover: #94a3b8;
+
+    --color-warning: #d97706;
 
     --color-modal-overlay: rgba(15, 23, 42, 0.45);
 }
@@ -93,6 +96,8 @@
 
     --color-scrollbar: #3a4656;
     --color-scrollbar-hover: #526176;
+
+    --color-warning: #e0a84a;
 
     --color-modal-overlay: rgba(0, 0, 0, 0.65);
 }
