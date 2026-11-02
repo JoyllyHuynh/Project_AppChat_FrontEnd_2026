@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import * as authService from '../features/auth/services/authMockService';
+import authService from '../features/auth/services/authService.js';
 
 const asThunk = (type, fn) =>
     createAsyncThunk(type, async (arg, { getState, rejectWithValue }) => {
