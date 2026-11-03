@@ -1,17 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Lock, Mail, User, UserPlus } from 'lucide-react';
+import { Lock, User, UserPlus } from 'lucide-react';
 import AuthLayout from '../components/AuthLayout';
 import FormField from '../../../components/common/FormField';
+import Alert from '../../../components/common/Alert';
 import { clearAuthFeedback, register } from '../../../store/authSlice';
 import { validateRegister } from '../../../utils/validators';
-import Alert from '../../../components/common/Alert';
 
 export default function RegisterPage() {
     const dispatch = useDispatch();
     const { loading, error } = useSelector((s) => s.auth);
-    const [form, setForm] = useState({ fullName: '', email: '', password: '', confirmPassword: '', agree: false });
+    const [form, setForm] = useState({ username: '', password: '', confirmPassword: '', agree: false });
     const [errors, setErrors] = useState({});
 
     useEffect(() => {
@@ -28,7 +28,7 @@ export default function RegisterPage() {
         e.preventDefault();
         const v = validateRegister(form);
         setErrors(v);
-        if (Object.keys(v).length === 0) dispatch(register(form));
+        if (Object.keys(v).length === 0) dispatch(register({ ...form, username: form.username.trim() }));
     };
 
     return (
@@ -43,8 +43,7 @@ export default function RegisterPage() {
         >
             <form className="auth-form" onSubmit={handleSubmit} noValidate>
                 <Alert>{error}</Alert>
-                <FormField label="Full name" icon={User} name="fullName" autoComplete="name" placeholder="Ma Nguyen Vu" value={form.fullName} onChange={handleChange} error={errors.fullName} />
-                <FormField label="Email" icon={Mail} name="email" type="email" autoComplete="email" placeholder="you@example.com" value={form.email} onChange={handleChange} error={errors.email} />
+                <FormField label="Username" icon={User} name="username" autoComplete="username" placeholder="Letters, numbers and underscores" value={form.username} onChange={handleChange} error={errors.username} />
                 <FormField label="Password" icon={Lock} name="password" type="password" autoComplete="new-password" placeholder="At least 6 characters" value={form.password} onChange={handleChange} error={errors.password} />
                 <FormField label="Confirm password" icon={Lock} name="confirmPassword" type="password" autoComplete="new-password" placeholder="Re-enter your password" value={form.confirmPassword} onChange={handleChange} error={errors.confirmPassword} />
                 <div>
