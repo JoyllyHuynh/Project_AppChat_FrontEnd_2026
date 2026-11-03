@@ -26,6 +26,9 @@ export const tokenStorage = {
             return null;
         }
     },
+    updateToken(token) {
+        currentStore().setItem(TOKEN_KEY, token);
+    },
     updateUser(user) {
         currentStore().setItem(USER_KEY, JSON.stringify(user));
     },

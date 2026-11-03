@@ -4,6 +4,12 @@ import { Provider } from "react-redux";
 import { BrowserRouter } from "react-router-dom";
 
 import { store } from "./app/store";
+import authService from "./features/auth/services/authService";
+import { restoreSession, sessionExpired } from "./store/authSlice";
+
+authService.onSessionExpired?.(() => store.dispatch(sessionExpired()));
+if (store.getState().auth.user) store.dispatch(restoreSession());
+
 import App from "./App";
 
 import "./styles/global.css";

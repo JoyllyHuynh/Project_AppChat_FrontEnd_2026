@@ -1,6 +1,6 @@
 import * as mock from './authMockService';
-import * as api from './authApi';
+import * as socket from './authSocketApi';
 
-const useMock = import.meta.env.VITE_USE_MOCK !== 'false';
+const mode = import.meta.env.VITE_API_MODE || 'mock';
 
-export default useMock ? mock : api;
+export default mode === 'socket' ? socket : mock;
