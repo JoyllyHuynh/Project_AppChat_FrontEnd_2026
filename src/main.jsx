@@ -6,22 +6,19 @@ import { BrowserRouter } from "react-router-dom";
 import { store } from "./app/store";
 import authService from "./features/auth/services/authService";
 import { restoreSession, sessionExpired } from "./store/authSlice";
+import App from "./App";
+
+import "./styles/global.css";
+import "./styles/common.css";
+import "./styles/auth.css";
+import "./styles/chat-layout.css";
+import "./styles/pages.css";
+import "./styles/themes.css";
 
 authService.onSessionExpired?.(() => store.dispatch(sessionExpired()));
 if (store.getState().auth.user) store.dispatch(restoreSession());
 
-import App from "./App";
-
-import "./styles/global.css";
-import './styles/common.css';
-import './styles/auth.css';
-import "./styles/chat-layout.css";
-import './styles/pages.css';
-import "./styles/themes.css";
-
-ReactDOM.createRoot(
-    document.getElementById("root")
-).render(
+ReactDOM.createRoot(document.getElementById("root")).render(
     <React.StrictMode>
         <Provider store={store}>
             <BrowserRouter>
