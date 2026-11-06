@@ -1,3 +1,4 @@
+
 import {
     MessageCircle,
     Users,
@@ -9,11 +10,19 @@ import {
     Sun,
     Moon,
 } from "lucide-react";
+
 import { useDispatch } from "react-redux";
-import { logout } from '../../store/authSlice';
+import { useNavigate, useLocation } from "react-router-dom";
+import { logout } from "../../store/authSlice";
 
 function Sidebar({ theme, onToggleTheme }) {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    const isChatPage = location.pathname === "/chat";
+    const isFriendsPage = location.pathname === "/friends";
+
     return (
         <aside className="sidebar">
 
@@ -25,18 +34,27 @@ function Sidebar({ theme, onToggleTheme }) {
 
             <nav className="sidebar-nav">
 
-                <button className="nav-item active" title="Messages">
+                <button
+                    className={`nav-item ${isChatPage ? "active" : ""}`}
+                    title="Messages"
+                    onClick={() => navigate("/chat")}
+                >
                     <MessageCircle size={22} />
                 </button>
 
-                <button className="nav-item" title="Contacts">
+                <button
+                    className={`nav-item ${isFriendsPage ? "active" : ""}`}
+                    title="Contacts"
+                    onClick={() => navigate("/friends")}
+                >
                     <Users size={22} />
                 </button>
+
 
                 <button className="nav-item" title="Groups">
                     <UsersRound size={22} />
                 </button>
-
+                
                 <button className="nav-item" title="Notifications">
                     <Bell size={22} />
                     <span className="notification-dot"></span>
@@ -49,8 +67,16 @@ function Sidebar({ theme, onToggleTheme }) {
                 <button
                     className="nav-item theme-toggle"
                     onClick={onToggleTheme}
-                    title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
-                    aria-label={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                    title={
+                        theme === "dark"
+                            ? "Switch to Light Mode"
+                            : "Switch to Dark Mode"
+                    }
+                    aria-label={
+                        theme === "dark"
+                            ? "Switch to Light Mode"
+                            : "Switch to Dark Mode"
+                    }
                 >
                     {theme === "dark" ? (
                         <Sun size={22} />
@@ -67,7 +93,8 @@ function Sidebar({ theme, onToggleTheme }) {
                     className="nav-item"
                     title="Log out"
                     aria-label="Log out"
-                    onClick={() => dispatch(logout())}>
+                    onClick={() => dispatch(logout())}
+                >
                     <LogOut size={22} />
                 </button>
 
@@ -84,9 +111,7 @@ function Sidebar({ theme, onToggleTheme }) {
             </div>
 
         </aside>
-
     );
-
 }
 
 export default Sidebar;

@@ -2,7 +2,6 @@ import { webSocketClient } from "../../../services/api/websocketClient";
 
 const SESSION_KEY = "webchat.socketSession";
 
-// Lưu thông tin phiên đăng nhập
 const saveSession = (username, code, remember) => {
   const storage = remember ? localStorage : sessionStorage;
   const otherStorage = remember ? sessionStorage : localStorage;
@@ -15,7 +14,6 @@ const saveSession = (username, code, remember) => {
   );
 };
 
-// Đọc thông tin phiên đăng nhập
 export const getSession = () => {
   try {
     const value =
@@ -28,13 +26,11 @@ export const getSession = () => {
   }
 };
 
-// Xóa thông tin phiên
 export const clearSession = () => {
   localStorage.removeItem(SESSION_KEY);
   sessionStorage.removeItem(SESSION_KEY);
 };
 
-// Chờ response đúng event từ server
 const waitForEvent = (expectedEvent, timeout = 10000) => {
   return new Promise((resolve, reject) => {
     let unsubscribe;
@@ -60,7 +56,6 @@ const waitForEvent = (expectedEvent, timeout = 10000) => {
   });
 };
 
-// Gửi yêu cầu và chờ phản hồi
 const request = async (event, data) => {
   const responsePromise = waitForEvent(event);
 
@@ -73,7 +68,6 @@ const request = async (event, data) => {
   return responsePromise;
 };
 
-// Đăng nhập lần đầu
 export const login = async ({ username, password, remember }) => {
   await webSocketClient.connect();
 
@@ -98,7 +92,6 @@ export const login = async ({ username, password, remember }) => {
   };
 };
 
-// Đăng nhập lại bằng mã phiên
 export const reLogin = async () => {
   const session = getSession();
 
@@ -130,7 +123,6 @@ saveSession(session.username, newCode, remember);
   };
 };
 
-// Đăng xuất phía frontend
 export const logout = async () => {
   clearSession();
   webSocketClient.disconnect();

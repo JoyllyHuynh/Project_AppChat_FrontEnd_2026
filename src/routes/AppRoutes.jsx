@@ -1,22 +1,14 @@
+
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import MainLayout from "../components/layout/MainLayout";
-import { FriendList } from "../features/user/components/FriendList";
+import FriendPage from "../features/user/pages/FriendPage";
 import ProtectedRoute from "../features/auth/components/ProtectedRoute";
 import PublicRoute from "../features/auth/components/PublicRoute";
+
 import LoginPage from "../features/auth/pages/LoginPage";
 import RegisterPage from "../features/auth/pages/RegisterPage";
 import ForgotPasswordPage from "../features/auth/pages/ForgotPasswordPage";
-function FriendPage() {
-    return (
-        <div className="flex h-screen bg-gray-50">
-            <FriendList />
-            <div className="flex-1 flex items-center justify-center text-gray-500">
-                <p>Khu vực nội dung danh sách bạn bè</p>
-            </div>
-        </div>
-    );
-}
 
 function AppRoutes() {
     return (
