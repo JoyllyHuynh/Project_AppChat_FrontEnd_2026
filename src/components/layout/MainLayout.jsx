@@ -13,11 +13,28 @@ import { on } from "../../services/api/socketClient";
 const parseMessageDate = (value) => {
     if (value == null) return null;
 
-    const date = new Date(
-        typeof value === "string" ? value.replace(" ", "T") : value
-    );
+    if (typeof value === "number") {
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? null : date;
+    }
 
-    return Number.isNaN(date.getTime()) ? null : date;
+    if (typeof value === "string") {
+        const normalizedValue = value.trim();
+
+        const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(
+            normalizedValue
+        );
+
+        const date = new Date(
+            hasTimezone
+                ? normalizedValue
+                : normalizedValue.replace(" ", "T") + "Z"
+        );
+
+        return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    return null;
 };
 
 function MainLayout() {

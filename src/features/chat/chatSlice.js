@@ -3,19 +3,42 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
 import {getPeopleChatMessages, sendPeopleChatMessage,} from "./services/chatSocketService";
 
+const parseMessageDate = (value) => {
+    if (value == null) return null;
+
+    if (typeof value === "number") {
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    if (typeof value === "string") {
+        const normalizedValue = value.trim();
+
+        const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(
+            normalizedValue
+        );
+
+        const date = new Date(
+            hasTimezone
+                ? normalizedValue
+                : normalizedValue.replace(" ", "T") + "Z"
+        );
+
+        return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    return null;
+};
+
 const hasMessageId = (message) =>
     message.id != null && String(message.id) !== "0";
 
 const getMessageTimestamp = (message) => {
-    const value = message.createAt;
-    const timestamp =
-        typeof value === "number"
-            ? value
-            : new Date(
-                typeof value === "string" ? value.replace(" ", "T") : value
-            ).getTime();
+    const date = parseMessageDate(message.createAt);
 
-    return Number.isNaN(timestamp) ? Number.POSITIVE_INFINITY : timestamp;
+    return date
+        ? date.getTime()
+        : Number.POSITIVE_INFINITY;
 };
 
 const areSameMessage = (first, second) => {
@@ -81,23 +104,16 @@ export const sendChatMessage = createAsyncThunk(
     async ({ to, mes, name }, { rejectWithValue }) => {
         try {
             const message = await sendPeopleChatMessage(to, mes);
-            const responseDate = message.createAt == null
-                ? null
-                : new Date(
-                    typeof message.createAt === "string"
-                        ? message.createAt.replace(" ", "T")
-                        : message.createAt
-                );
+            const responseDate = parseMessageDate(message.createAt);
 
             return {
                 ...message,
                 name: message.name || name,
                 to: message.to || to,
                 mes: message.mes || mes.trim(),
-                createAt:
-                    responseDate && !Number.isNaN(responseDate.getTime())
-                        ? responseDate.toISOString()
-                        : new Date().toISOString(),
+                createAt: responseDate
+                    ? responseDate.toISOString()
+                    : new Date().toISOString(),
             };
         } catch (error) {
             return rejectWithValue(
