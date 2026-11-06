@@ -39,26 +39,56 @@ function failAllPending(error) {
 
 function handleMessage(message) {
     let packet;
+
     try {
         packet = JSON.parse(message.data);
-    } catch {
+    } catch (error) {
+        console.error("[WebSocket] Invalid message:", error);
         return;
     }
+
+    console.log("[WebSocket] Received event:", packet.event);
+
     const waiting = pending.get(packet.event);
-    if (waiting && waiting.length > 0) {
-        const entry = waiting.shift();
+    let responseIndex = 0;
+
+    if (packet.event === "SEND_CHAT" && packet.data?.name) {
+        responseIndex = waiting?.findIndex(
+            (entry) =>
+                packet.data.name === session?.user &&
+                packet.data.to === entry.data?.to &&
+                packet.data.mes === entry.data?.mes
+        ) ?? -1;
+    }
+
+    if (waiting && responseIndex !== -1 && waiting.length > 0) {
+        const [entry] = waiting.splice(responseIndex, 1);
+
         clearTimeout(entry.timer);
-        if (packet.status === 'success') {
+
+        if (packet.status === "success") {
             entry.resolve(packet.data);
         } else {
-            const error = new Error(packet.mes || 'Request failed.');
+            const error = new Error(
+                packet.mes || "Request failed."
+            );
+
             error.server = true;
             entry.reject(error);
         }
-        return;
     }
-    listeners.get(packet.event)?.forEach((fn) => fn(packet));
+    listeners.get(packet.event)?.forEach((fn) => {
+        try {
+            fn(packet);
+        } catch (error) {
+            console.error(
+                `[WebSocket] Listener ${packet.event} failed:`,
+                error
+            );
+        }
+    });
 }
+
 
 export function connect() {
     if (isOpen()) return Promise.resolve();
@@ -99,7 +129,7 @@ export function disconnect() {
 export async function request(event, data) {
     await connect();
     return new Promise((resolve, reject) => {
-        const entry = { resolve, reject, timer: null };
+        const entry = { resolve, reject, timer: null, data };
         entry.timer = setTimeout(() => {
             removePending(event, entry);
             reject(new Error('The server did not respond. Try again.'));

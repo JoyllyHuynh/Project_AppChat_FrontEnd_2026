@@ -251,7 +251,9 @@ function ChatWindow({
                         </div>
 
                         {group.messages.map((item) => {
-                            const isMine = item.senderId === currentUser.id;
+                            const isMine =
+                                String(item.senderId).trim().toLowerCase() ===
+                                String(currentUser.username || currentUser.id).trim().toLowerCase();
 
                             return (
                                 <div
