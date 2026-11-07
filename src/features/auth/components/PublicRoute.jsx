@@ -4,5 +4,5 @@ import { useSelector } from 'react-redux';
 export default function PublicRoute() {
     const user = useSelector((s) => s.auth.user);
     const location = useLocation();
-    return user ? <Navigate to={location.state?.from?.pathname || '/'} replace /> : <Outlet />;
+    return user ? <Navigate to={location.state?.from?.pathname || '/chat'} replace /> : <Outlet />;
 }

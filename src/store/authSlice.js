@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import * as authService from '../features/auth/services/authMockService';
+import authService from '../features/auth/services/authService.js';
 
 const asThunk = (type, fn) =>
     createAsyncThunk(type, async (arg, { getState, rejectWithValue }) => {
@@ -14,6 +14,7 @@ export const login = asThunk('auth/login', (data) => authService.login(data));
 export const register = asThunk('auth/register', (data) => authService.register(data));
 export const logout = asThunk('auth/logout', () => authService.logout());
 export const forgotPassword = asThunk('auth/forgotPassword', (data) => authService.forgotPassword(data));
+export const restoreSession = asThunk('auth/restoreSession', () => authService.restoreSession());
 export const updateProfile = asThunk('auth/updateProfile', (patch, user) => authService.updateProfile(user.id, patch));
 export const setUserStatus = asThunk('auth/setUserStatus', (status, user) => authService.setStatus(user.id, status));
 export const changePassword = asThunk('auth/changePassword', (data, user) => authService.changePassword(user.id, data));
@@ -32,6 +33,9 @@ const authSlice = createSlice({
         clearAuthFeedback(state) {
             state.error = null;
         },
+        sessionExpired(state) {
+            state.user = null;
+        },
     },
     extraReducers: (builder) => {
         [login, register, logout, forgotPassword].forEach((thunk) => {
@@ -40,40 +44,50 @@ const authSlice = createSlice({
                     s.loading = true;
                     s.error = null;
                 })
-                .addCase(thunk.fulfilled, (s) => {
-                    s.loading = false;
-                })
                 .addCase(thunk.rejected, (s, a) => {
                     s.loading = false;
                     s.error = a.payload;
                 });
         });
-        builder
-            .addCase(login.fulfilled, (s, a) => {
-                s.user = a.payload;
-            })
-            .addCase(register.fulfilled, (s, a) => {
-                s.user = a.payload;
-            })
-            .addCase(logout.fulfilled, (s) => {
-                s.user = null;
-            });
 
         [updateProfile, changePassword].forEach((thunk) => {
             builder
                 .addCase(thunk.pending, (s) => {
                     s.saving = true;
                 })
-                .addCase(thunk.fulfilled, (s) => {
-                    s.saving = false;
-                })
                 .addCase(thunk.rejected, (s) => {
                     s.saving = false;
                 });
         });
+
         builder
-            .addCase(updateProfile.fulfilled, (s, a) => {
+            .addCase(login.fulfilled, (s, a) => {
+                s.loading = false;
                 s.user = a.payload;
+            })
+            .addCase(register.fulfilled, (s, a) => {
+                s.loading = false;
+                s.user = a.payload;
+            })
+            .addCase(logout.fulfilled, (s) => {
+                s.loading = false;
+                s.user = null;
+            })
+            .addCase(forgotPassword.fulfilled, (s) => {
+                s.loading = false;
+            })
+            .addCase(restoreSession.fulfilled, (s, a) => {
+                s.user = a.payload;
+            })
+            .addCase(restoreSession.rejected, (s) => {
+                s.user = null;
+            })
+            .addCase(updateProfile.fulfilled, (s, a) => {
+                s.saving = false;
+                s.user = a.payload;
+            })
+            .addCase(changePassword.fulfilled, (s) => {
+                s.saving = false;
             })
             .addCase(setUserStatus.fulfilled, (s, a) => {
                 s.user = a.payload;
@@ -81,5 +95,5 @@ const authSlice = createSlice({
     },
 });
 
-export const { clearAuthFeedback } = authSlice.actions;
+export const { clearAuthFeedback, sessionExpired } = authSlice.actions;
 export default authSlice.reducer;

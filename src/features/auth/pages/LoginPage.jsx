@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Lock, LogIn, Mail } from 'lucide-react';
+import { Lock, LogIn, User } from 'lucide-react';
 import AuthLayout from '../components/AuthLayout';
 import FormField from '../../../components/common/FormField';
+import Alert from '../../../components/common/Alert';
 import { clearAuthFeedback, login } from '../../../store/authSlice';
 import { validateLogin } from '../../../utils/validators';
 
 export default function LoginPage() {
     const dispatch = useDispatch();
-    const { loading } = useSelector((s) => s.auth);
-    const [form, setForm] = useState({ email: '', password: '', remember: true });
+    const { loading, error } = useSelector((s) => s.auth);
+    const [form, setForm] = useState({ username: '', password: '', remember: true });
     const [errors, setErrors] = useState({});
 
     useEffect(() => {
@@ -47,7 +48,8 @@ export default function LoginPage() {
             }
         >
             <form className="auth-form" onSubmit={handleSubmit} noValidate>
-                <FormField label="Email" icon={Mail} name="email" type="email" autoComplete="email" placeholder="you@example.com" value={form.email} onChange={handleChange} error={errors.email} />
+                <Alert>{error}</Alert>
+                <FormField label="Username" icon={User} name="username" autoComplete="username" placeholder="Enter your username" value={form.username} onChange={handleChange} error={errors.username} />
                 <FormField label="Password" icon={Lock} name="password" type="password" autoComplete="current-password" placeholder="Enter your password" value={form.password} onChange={handleChange} error={errors.password} />
                 <div className="auth-row">
                     <label className="auth-check">
@@ -58,7 +60,7 @@ export default function LoginPage() {
                 <button className="btn btn-primary btn-block" disabled={loading}>
                     <LogIn size={18} /> {loading ? 'Logging in…' : 'Log in'}
                 </button>
-                <p className="auth-demo">Demo account: demo@webchat.com / 123456</p>
+                <p className="auth-demo">Demo account (mock): demo / 123456</p>
             </form>
         </AuthLayout>
     );

@@ -1,0 +1,103 @@
+:root,
+[data-theme="light"] {
+    color-scheme: light;
+
+    --color-sidebar: #ffffff;
+    --color-conversation: #ffffff;
+    --color-chat: #f8fafc;
+    --color-on-primary: #ffffff;
+
+    --color-surface: #f1f5f9;
+    --color-surface-hover: #e8eef5;
+    --color-surface-active: #e0edff;
+
+    --color-primary: #2563eb;
+    --color-primary-hover: #1d4ed8;
+
+    --color-text: #1e293b;
+    --color-text-secondary: #64748b;
+    --color-text-muted: #94a3b8;
+
+    --color-online: #22c55e;
+    --color-danger: #ef4444;
+
+    --color-border: #e2e8f0;
+
+    --bg-main: #f8fafc;
+    --bg-sidebar: #ffffff;
+    --bg-panel: #ffffff;
+    --bg-bubble: #f1f5f9;
+    --bg-input: #ffffff;
+
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+
+    --text: #1e293b;
+    --text-muted: #64748b;
+
+    --border: #e2e8f0;
+    --success: #22c55e;
+    --danger: #ef4444;
+
+    --color-message-received: #f1f5f9;
+    --color-message-sent: #2563eb;
+    --color-message-sent-text: #ffffff;
+
+    --color-scrollbar: #cbd5e1;
+    --color-scrollbar-hover: #94a3b8;
+
+    --color-warning: #d97706;
+
+    --color-modal-overlay: rgba(15, 23, 42, 0.45);
+}
+
+[data-theme="dark"] {
+    color-scheme: dark;
+
+    --color-sidebar: #151a23;
+    --color-conversation: #1b222e;
+    --color-chat: #171d27;
+
+    --color-surface: #222b38;
+    --color-surface-hover: #293443;
+    --color-surface-active: #29394f;
+
+    --color-primary: #4778b8;
+    --color-primary-hover: #5689ca;
+
+    --color-text: #e5e9f0;
+    --color-text-secondary: #a0aaba;
+    --color-text-muted: #778496;
+
+    --color-online: #55b982;
+    --color-danger: #e45b63;
+
+    --color-border: #2b3543;
+
+    --bg-main: #171c26;
+    --bg-sidebar: #151b25;
+    --bg-panel: #1b2330;
+    --bg-bubble: #282f39;
+    --bg-input: #131822;
+
+    --primary: #3b82f6;
+    --primary-hover: #2563eb;
+
+    --text: #f8fafc;
+    --text-muted: #94a3b8;
+
+    --border: #303a48;
+    --success: #22c55e;
+    --danger: #ef4444;
+
+    --color-message-received: #252e3b;
+    --color-message-sent: #365f91;
+    --color-message-sent-text: #f4f7fb;
+
+    --color-scrollbar: #3a4656;
+    --color-scrollbar-hover: #526176;
+
+    --color-warning: #e0a84a;
+
+    --color-modal-overlay: rgba(0, 0, 0, 0.65);
+}

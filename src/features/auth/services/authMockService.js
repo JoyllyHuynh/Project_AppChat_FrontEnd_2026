@@ -19,10 +19,10 @@ const write = (k, v) => {
 
 const DEMO_USER = {
     id: 'u_demo',
-    fullName: 'Ma Nguyen Vu',
-    username: 'manguyenvu',
-    email: 'demo@webchat.com',
+    fullName: 'Demo User',
+    username: 'demo',
     password: '123456',
+    email: '',
     phone: '',
     bio: 'Building WebChat.',
     avatar: null,
@@ -30,12 +30,15 @@ const DEMO_USER = {
 };
 
 const getUsers = () => {
-    const users = read(USERS_KEY, null);
-    if (users) return users;
-    write(USERS_KEY, [DEMO_USER]);
-    return [DEMO_USER];
+    const stored = read(USERS_KEY, null);
+    if (!stored) {
+        write(USERS_KEY, [DEMO_USER]);
+        return [DEMO_USER];
+    }
+    return stored.map((u) => (u.id === DEMO_USER.id ? { ...u, username: DEMO_USER.username } : u));
 };
 const strip = ({ password, ...rest }) => rest;
+const sameName = (a, b) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
 export const getSession = () => {
     const id = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY);
@@ -44,26 +47,28 @@ export const getSession = () => {
     return user ? strip(user) : null;
 };
 
-export const login = async ({ email, password, remember }) => {
+export const restoreSession = async () => getSession();
+
+export const login = async ({ username, password, remember }) => {
     await delay();
-    const user = getUsers().find((u) => u.email.toLowerCase() === email.trim().toLowerCase() && u.password === password);
-    if (!user) throw new Error('Incorrect email or password.');
+    const user = getUsers().find((u) => sameName(u.username, username) && u.password === password);
+    if (!user) throw new Error('Incorrect username or password.');
     (remember ? localStorage : sessionStorage).setItem(SESSION_KEY, user.id);
     return { ...strip(user), status: 'online' };
 };
 
-export const register = async ({ fullName, email, password }) => {
+export const register = async ({ username, password }) => {
     await delay();
     const users = getUsers();
-    if (users.some((u) => u.email.toLowerCase() === email.trim().toLowerCase())) {
-        throw new Error('This email is already registered.');
+    if (users.some((u) => sameName(u.username, username))) {
+        throw new Error('User already exists!');
     }
     const user = {
         id: `u_${Date.now()}`,
-        fullName: fullName.trim(),
-        username: email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '').slice(0, 20) || 'user',
-        email: email.trim(),
+        fullName: username.trim(),
+        username: username.trim(),
         password,
+        email: '',
         phone: '',
         bio: '',
         avatar: null,
