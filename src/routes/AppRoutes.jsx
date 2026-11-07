@@ -5,7 +5,7 @@ import MainLayout from "../components/layout/MainLayout";
 import FriendPage from "../features/user/pages/FriendPage";
 import ProtectedRoute from "../features/auth/components/ProtectedRoute";
 import PublicRoute from "../features/auth/components/PublicRoute";
-
+import FriendList from "../features/user/components/FriendList";
 import LoginPage from "../features/auth/pages/LoginPage";
 import RegisterPage from "../features/auth/pages/RegisterPage";
 import ForgotPasswordPage from "../features/auth/pages/ForgotPasswordPage";
@@ -23,7 +23,14 @@ function AppRoutes() {
 
             <Route element={<ProtectedRoute />}>
                 <Route path="/chat" element={<MainLayout />} />
-                <Route path="/friends" element={<FriendPage />} />
+
+                <Route path="/friends" element={<FriendPage />}>
+                    <Route index element={<Navigate to="/friends/list" replace />} />
+                    <Route path="list" element={<FriendList />} />
+                    <Route path="groups" element={<div style={{ flex: 1, padding: '24px' }}><h2>Danh sách nhóm và cộng đồng</h2></div>} />
+                    <Route path="requests" element={<div style={{ flex: 1, padding: '24px' }}><h2>Lời mời kết bạn</h2></div>} />
+                    <Route path="invites" element={<div style={{ flex: 1, padding: '24px' }}><h2>Lời mời vào nhóm và cộng đồng</h2></div>} />
+                </Route>
             </Route>
 
             <Route path="*" element={<Navigate to="/chat" replace />} />

@@ -1,0 +1,131 @@
+.friend-requests-container {
+    flex: 1;
+    background-color: #f3f4f6;
+    padding: 24px 32px;
+    overflow-y: auto;
+    height: 100%;
+}
+
+.friend-requests-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 24px;
+}
+
+.friend-section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 16px;
+}
+
+.friend-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.friend-request-card {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.friend-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+}
+
+.friend-card-user-info {
+    display: flex;
+    gap: 12px;
+}
+
+.friend-card-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.friend-card-name-time h4 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.friend-card-name-time span {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.friend-card-message {
+    background-color: #f3f4f6;
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: #374151;
+    margin: 0;
+}
+
+.friend-card-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-reject {
+    flex: 1;
+    background-color: #e5e7eb;
+    color: #374151;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 0;
+    font-weight: 500;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn-reject:hover {
+    background-color: #d1d5db;
+}
+
+.btn-accept {
+    flex: 1;
+    background-color: #eef2ff;
+    color: #0068ff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 0;
+    font-weight: 500;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn-accept:hover {
+    background-color: #e0e7ff;
+}
+
+.btn-revoke {
+    width: 100%;
+    background-color: #e5e7eb;
+    color: #374151;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 0;
+    font-weight: 500;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn-revoke:hover {
+    background-color: #d1d5db;
+}
