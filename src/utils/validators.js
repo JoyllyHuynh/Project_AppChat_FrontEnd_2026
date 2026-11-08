@@ -1,18 +1,18 @@
 export const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
-export const validateLogin = ({ email, password }) => {
+export const isUsername = (v) => /^[a-zA-Z0-9_]+$/.test(v);
+
+export const validateLogin = ({ username, password }) => {
     const e = {};
-    if (!email.trim()) e.email = 'Enter your email.';
-    else if (!isEmail(email)) e.email = 'Enter a valid email address.';
+    if (!username.trim()) e.username = 'Enter your username.';
     if (!password) e.password = 'Enter your password.';
     return e;
 };
 
-export const validateRegister = ({ fullName, email, password, confirmPassword, agree }) => {
+export const validateRegister = ({ username, password, confirmPassword, agree }) => {
     const e = {};
-    if (fullName.trim().length < 2) e.fullName = 'Enter your full name.';
-    if (!email.trim()) e.email = 'Enter your email.';
-    else if (!isEmail(email)) e.email = 'Enter a valid email address.';
+    if (!username.trim()) e.username = 'Enter a username.';
+    else if (!isUsername(username.trim())) e.username = 'Use only letters, numbers and underscores.';
     if (password.length < 6) e.password = 'Use at least 6 characters.';
     if (confirmPassword !== password) e.confirmPassword = 'Passwords do not match.';
     if (!agree) e.agree = 'Accept the terms to continue.';

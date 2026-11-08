@@ -4,28 +4,49 @@ import ConversationList from "../../features/chat/components/ConversationList";
 import ChatWindow from "../../features/chat/components/ChatWindow";
 import {getReplyDelay,createIncomingMessage,generateAutoReply,generateIncomingContent} from "../../features/chat/services/chatMockService";
 import {currentUser,conversations as initialConversations,initialMessages,} from "../../services/mock/chatData";
-import {getConversationLabels,saveConversationLabels,generateLabelId,} from "../../features/chat/services/conversationLabelService";
+import {getConversationLabelData, saveConversationLabelData, generateLabelId,} from "../../features/chat/services/conversationLabelService";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchUsers } from "../../features/user/userSlice";
+import { fetchChatMessages, sendChatMessage,receiveChatMessage, } from "../../features/chat/chatSlice";
+import { on } from "../../services/api/socketClient";
+import useTheme from "../../hooks/useTheme";
+
+const parseMessageDate = (value) => {
+    if (value == null) return null;
+
+    if (typeof value === "number") {
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    if (typeof value === "string") {
+        const normalizedValue = value.trim();
+
+        const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(
+            normalizedValue
+        );
+
+        const date = new Date(
+            hasTimezone
+                ? normalizedValue
+                : normalizedValue.replace(" ", "T") + "Z"
+        );
+
+        return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    return null;
+};
 
 function MainLayout() {
 
-    const [theme, setTheme] = useState(() => {
-        const savedTheme = localStorage.getItem("webchat_theme");
+    const dispatch = useDispatch();
 
-        return savedTheme === "light" || savedTheme === "dark"
-            ? savedTheme
-            : "dark";
-    });
+    const authUser = useSelector((state) => state.auth.user);
 
-    useEffect(() => {
-        document.documentElement.setAttribute("data-theme", theme);
-        localStorage.setItem("webchat_theme", theme);
-    }, [theme]);
+    const username = authUser?.username?.trim().toLowerCase() || "guest";
 
-    const handleToggleTheme = () => {
-        setTheme((prevTheme) =>
-            prevTheme === "dark" ? "light" : "dark"
-        );
-    };
+    const { theme, toggleTheme } = useTheme();
 
     const [conversations, setConversations] = useState(() => {
         try {
@@ -48,11 +69,29 @@ function MainLayout() {
 
     const [messages, setMessages] = useState(initialMessages);
 
-    const [labels, setLabels] = useState(() => getConversationLabels());
+    const [labelData, setLabelData] = useState(() => ({
+        owner: username,
+        ...getConversationLabelData(username),
+    }));
+
+    const labels = labelData.labels;
+    const labelAssignments = labelData.assignments;
 
     useEffect(() => {
-        saveConversationLabels(labels);
-    }, [labels]);
+        setLabelData({
+            owner: username,
+            ...getConversationLabelData(username),
+        });
+    }, [username]);
+
+    useEffect(() => {
+        if (labelData.owner !== username) return;
+
+        saveConversationLabelData(username, {
+            labels: labelData.labels,
+            assignments: labelData.assignments,
+        });
+    }, [labelData, username]);
 
     useEffect(() => {
         try {
@@ -65,12 +104,6 @@ function MainLayout() {
         }
     }, [conversations]);
 
-    const activeConversation = conversations.find(
-        (item) => item.id === activeId
-    );
-
-    const activeMessages = messages[activeId] || [];
-
     const handleSelectConversation = (id) => {
         activeIdRef.current = id;
         setActiveId(id);
@@ -82,6 +115,24 @@ function MainLayout() {
                     : item
             )
         );
+
+        const selectedConversation = conversations.find(
+            (item) => item.id === id
+        );
+
+        if (!selectedConversation) return;
+
+        if (selectedConversation.type !== 0) {
+            console.log("Đây không phải cuộc trò chuyện cá nhân.");
+            return;
+        }
+
+        dispatch(
+            fetchChatMessages({
+                name: selectedConversation.name,
+                page: 1,
+            })
+        );
     };
 
     const handleBackToConversationList = () => {
@@ -89,50 +140,52 @@ function MainLayout() {
         setActiveId(null);
     };
 
-    const handleSendMessage = (content) => {
+
+    const handleSendMessage = async (content) => {
         const trimmedContent = content.trim();
 
-        if (!trimmedContent) return;
+        if (!trimmedContent || !activeConversation) return;
 
-        const now = Date.now();
+        if (activeConversation.type !== 0) {
+            console.warn("Hiện tại chỉ hỗ trợ gửi tin nhắn cá nhân.");
+            return;
+        }
 
-        const newMessage = {
-            id: now,
-            senderId: currentUser.id,
-            content: trimmedContent,
-            time: new Date(now).toLocaleTimeString("vi-VN", {
-                hour: "2-digit",
-                minute: "2-digit",
-            }),
-            sentAt: now,
-        };
+        const conversationName = activeConversation.name;
 
-        setMessages((prev) => ({
-            ...prev,
-            [activeId]: [
-                ...(prev[activeId] || []),
-                newMessage,
-            ],
-        }));
+        try {
+            const result = await dispatch(
+                sendChatMessage({
+                    to: conversationName,
+                    mes: trimmedContent,
+                    name: authUser?.username,
+                })
+            ).unwrap();
 
-        setConversations((prev) => {
-            const updated = prev.map((item) =>
-                item.id === activeId
-                    ? {
-                        ...item,
-                        lastMessage: `You: ${trimmedContent}`,
-                        time: newMessage.time,
-                        timestamp: now,
-                    }
-                    : item
+            console.log("[SEND_CHAT] Success:", result);
+            const sentAt = parseMessageDate(result.createAt);
+
+            setConversations((prev) =>
+                prev
+                    .map((conversation) =>
+                        conversation.name === conversationName
+                            ? {
+                                ...conversation,
+                                lastMessage: `You: ${result.mes}`,
+                                time: sentAt?.toLocaleTimeString("vi-VN", {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                }) || "",
+                                timestamp: sentAt?.getTime() || 0,
+                            }
+                            : conversation
+                    )
+                    .sort((a, b) => b.timestamp - a.timestamp)
             );
 
-            return updated.sort(
-                (a, b) => b.timestamp - a.timestamp
-            );
-        });
-
-        handleAutoReply(activeId, trimmedContent);
+        } catch (sendError) {
+            console.error("[SEND_CHAT] Failed:", sendError);
+        }
     };
 
     const handleAutoReply = (conversationId, userMessage) => {
@@ -247,7 +300,10 @@ function MainLayout() {
             color,
         };
 
-        setLabels((prev) => [...prev, newLabel]);
+        setLabelData((prev) => ({
+            ...prev,
+            labels: [...prev.labels, newLabel],
+        }));
 
         return true;
     };
@@ -266,21 +322,28 @@ function MainLayout() {
 
         if (isDuplicate) return false;
 
-        setLabels((prev) =>
-            prev.map((label) =>
+        setLabelData((prev) => ({
+            ...prev,
+            labels: prev.labels.map((label) =>
                 label.id === id
                     ? { ...label, name: trimmedName, color }
                     : label
-            )
-        );
+            ),
+        }));
 
         return true;
     };
 
     const handleDeleteLabel = (id) => {
-        setLabels((prev) =>
-            prev.filter((label) => label.id !== id)
-        );
+        setLabelData((prev) => ({
+            ...prev,
+            labels: prev.labels.filter((label) => label.id !== id),
+            assignments: Object.fromEntries(
+                Object.entries(prev.assignments).filter(
+                    ([, labelId]) => labelId !== id
+                )
+            ),
+        }));
 
         setConversations((prev) =>
             prev.map((conversation) =>
@@ -292,25 +355,225 @@ function MainLayout() {
     };
 
     const handleAssignLabel = (conversationId, labelId) => {
+        const conversation = conversations.find(
+            (item) => String(item.id) === String(conversationId)
+        );
+
+        if (!conversation) return;
+
+        setLabelData((prev) => {
+            const assignments = { ...prev.assignments };
+
+            if (labelId) {
+                assignments[conversation.name] = labelId;
+            } else {
+                delete assignments[conversation.name];
+            }
+
+            return { ...prev, assignments };
+        });
+
         setConversations((prev) =>
-            prev.map((conversation) =>
-                conversation.id === conversationId
-                    ? {
-                        ...conversation,
-                        labelId: labelId,
-                    }
-                    : conversation
+            prev.map((item) =>
+                String(item.id) === String(conversationId)
+                    ? { ...item, labelId: labelId || null }
+                    : item
             )
         );
     };
 
+    const {
+        users,  
+        usersLoading,
+        error,
+    } = useSelector((state) => state.user);
+
+    const {
+        messagesByUser,
+        loadingByUser,
+        errorByUser,
+        sending,
+        sendError,
+    } = useSelector((state) => state.chat);
+
+    useEffect(() => {
+        console.log("[AUTH USER]", authUser);
+    }, [authUser]);
+
+    const activeConversation = conversations.find(
+        (item) => item.id === activeId
+    );
+
+
+    const activeMessages = activeConversation
+        ? (messagesByUser[activeConversation.name] || [])
+            .map((message) => {
+                const date = parseMessageDate(message.createAt);
+
+                return {
+                    id: message.id,
+                    senderId: message.name,
+                    content: message.mes,
+                    sentAt: date ? date.toISOString() : null,
+                    time: date
+                        ? date.toLocaleTimeString("vi-VN", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                        })
+                        : "",
+                    to: message.to,
+                    type: message.type,
+                };
+            })
+            .sort((a, b) => {
+                const timeA = a.sentAt
+                    ? new Date(a.sentAt).getTime()
+                    : Number.POSITIVE_INFINITY;
+
+                const timeB = b.sentAt
+                    ? new Date(b.sentAt).getTime()
+                    : Number.POSITIVE_INFINITY;
+
+                return timeA - timeB;
+            })
+        : [];
+
+
+    useEffect(() => {
+        dispatch(fetchUsers());
+    }, [dispatch]);
+
+    useEffect(() => {
+        console.log("[GET_USER_LIST] Users:", users);
+        console.log("[GET_USER_LIST] Loading:", usersLoading);
+        console.log("[GET_USER_LIST] Error:", error);
+    }, [users, usersLoading, error]);
+
+    useEffect(() => {
+        if (usersLoading || users.length === 0) return;
+
+        setConversations((prevConversations) => {
+            const apiConversations = users.map((user) => {
+                const existingConversation = prevConversations.find(
+                    (conversation) =>
+                        String(conversation.id) === String(user.id)
+                );
+
+                const date = user.actionTime
+                    ? new Date(user.actionTime.replace(" ", "T"))
+                    : null;
+
+                const timestamp =
+                    date && !Number.isNaN(date.getTime())
+                        ? date.getTime()
+                        : 0;
+
+                return {
+                    ...existingConversation,
+
+                    id: user.id,
+                    name: user.name,
+                    type: user.type,
+                    actionTime: user.actionTime,
+
+                    avatar:
+                        existingConversation?.avatar ||
+                        `https://i.pravatar.cc/150?u=${encodeURIComponent(user.id)}`,
+
+                    status: null,
+
+                    time: timestamp
+                        ? new Date(timestamp).toLocaleTimeString("vi-VN", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                        })
+                        : "",
+
+                    lastMessage: existingConversation?.lastMessage || "",
+                    timestamp,
+                    unread: existingConversation?.unread || 0,
+                    labelId: labelAssignments[user.name] || null,
+                };
+            });
+
+            return apiConversations.sort(
+                (a, b) => b.timestamp - a.timestamp
+            );
+        });
+    }, [users, usersLoading, labelAssignments]);
+
+    useEffect(() => {
+        const unsubscribe = on("SEND_CHAT", (packet) => {
+            console.log("[REALTIME] SEND_CHAT received:", packet);
+
+            const payload = packet.data;
+
+            const incomingMessages = Array.isArray(payload)
+                ? payload
+                : [payload];
+
+            incomingMessages.forEach((message) => {
+                if (!message?.name || !message?.mes) return;
+
+                const currentUsername = authUser?.username;
+
+                const conversationName =
+                    message.name === currentUsername
+                        ? message.to
+                        : message.name;
+
+                if (!conversationName) return;
+
+                const date = parseMessageDate(message.createAt) || new Date();
+
+                const normalizedMessage = {
+                    ...message,
+                    createAt: date.toISOString(),
+                };
+
+                dispatch(
+                    receiveChatMessage({
+                        conversationName,
+                        message: normalizedMessage,
+                    })
+                );
+
+                setConversations((prev) =>
+                    prev
+                        .map((conversation) =>
+                            conversation.name === conversationName
+                                ? {
+                                    ...conversation,
+                                    lastMessage: 
+                                        message.name === currentUsername
+                                            ? `You: ${message.mes}`
+                                            : message.mes,
+                                    time: date.toLocaleTimeString("vi-VN", {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                    }),
+                                    timestamp: date.getTime(),
+                                    unread:
+                                        message.name === currentUsername
+                                            ? conversation.unread
+                                            : activeIdRef.current === conversation.id
+                                                ? 0
+                                                : conversation.unread + 1,
+                                }
+                                : conversation
+                        )
+                        .sort((a, b) => b.timestamp - a.timestamp)
+                );
+            });
+        });
+
+        return () => unsubscribe();
+    }, [dispatch, authUser?.username]);
+
     return (
         <div className={`app-container ${activeId ? "mobile-chat-open" : ""}`}>
 
-            <Sidebar
-                theme={theme}
-                onToggleTheme={handleToggleTheme}
-            />
+            <Sidebar theme={theme} onToggleTheme={toggleTheme} />
             
             <ConversationList
                 conversations={conversations}
@@ -329,7 +592,11 @@ function MainLayout() {
             <ChatWindow
                 conversation={activeConversation}
                 messages={activeMessages}
-                currentUser={currentUser}
+                currentUser={{
+                    ...currentUser,
+                    id: authUser?.username || currentUser.id,
+                    username: authUser?.username,
+                }}
                 onSendMessage={handleSendMessage}
                 onSimulateIncoming={handleSimulateIncoming}
                 conversations={conversations}
