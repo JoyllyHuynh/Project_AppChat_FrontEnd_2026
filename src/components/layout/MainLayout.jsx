@@ -9,6 +9,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchUsers } from "../../features/user/userSlice";
 import { fetchChatMessages, sendChatMessage,receiveChatMessage, } from "../../features/chat/chatSlice";
 import { on } from "../../services/api/socketClient";
+import useTheme from "../../hooks/useTheme";
 
 const parseMessageDate = (value) => {
     if (value == null) return null;
@@ -45,24 +46,7 @@ function MainLayout() {
 
     const username = authUser?.username?.trim().toLowerCase() || "guest";
 
-    const [theme, setTheme] = useState(() => {
-        const savedTheme = localStorage.getItem("webchat_theme");
-
-        return savedTheme === "light" || savedTheme === "dark"
-            ? savedTheme
-            : "dark";
-    });
-
-    useEffect(() => {
-        document.documentElement.setAttribute("data-theme", theme);
-        localStorage.setItem("webchat_theme", theme);
-    }, [theme]);
-
-    const handleToggleTheme = () => {
-        setTheme((prevTheme) =>
-            prevTheme === "dark" ? "light" : "dark"
-        );
-    };
+    const { theme, toggleTheme } = useTheme();
 
     const [conversations, setConversations] = useState(() => {
         try {
@@ -589,10 +573,7 @@ function MainLayout() {
     return (
         <div className={`app-container ${activeId ? "mobile-chat-open" : ""}`}>
 
-            <Sidebar
-                theme={theme}
-                onToggleTheme={handleToggleTheme}
-            />
+            <Sidebar theme={theme} onToggleTheme={toggleTheme} />
             
             <ConversationList
                 conversations={conversations}
