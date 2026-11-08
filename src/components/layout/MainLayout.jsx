@@ -4,7 +4,7 @@ import ConversationList from "../../features/chat/components/ConversationList";
 import ChatWindow from "../../features/chat/components/ChatWindow";
 import {getReplyDelay,createIncomingMessage,generateAutoReply,generateIncomingContent} from "../../features/chat/services/chatMockService";
 import {currentUser,conversations as initialConversations,initialMessages,} from "../../services/mock/chatData";
-import {getConversationLabels,saveConversationLabels,generateLabelId,} from "../../features/chat/services/conversationLabelService";
+import {getConversationLabelData, saveConversationLabelData, generateLabelId,} from "../../features/chat/services/conversationLabelService";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUsers } from "../../features/user/userSlice";
 import { fetchChatMessages, sendChatMessage,receiveChatMessage, } from "../../features/chat/chatSlice";
@@ -38,6 +38,12 @@ const parseMessageDate = (value) => {
 };
 
 function MainLayout() {
+
+    const dispatch = useDispatch();
+
+    const authUser = useSelector((state) => state.auth.user);
+
+    const username = authUser?.username?.trim().toLowerCase() || "guest";
 
     const [theme, setTheme] = useState(() => {
         const savedTheme = localStorage.getItem("webchat_theme");
@@ -79,11 +85,29 @@ function MainLayout() {
 
     const [messages, setMessages] = useState(initialMessages);
 
-    const [labels, setLabels] = useState(() => getConversationLabels());
+    const [labelData, setLabelData] = useState(() => ({
+        owner: username,
+        ...getConversationLabelData(username),
+    }));
+
+    const labels = labelData.labels;
+    const labelAssignments = labelData.assignments;
 
     useEffect(() => {
-        saveConversationLabels(labels);
-    }, [labels]);
+        setLabelData({
+            owner: username,
+            ...getConversationLabelData(username),
+        });
+    }, [username]);
+
+    useEffect(() => {
+        if (labelData.owner !== username) return;
+
+        saveConversationLabelData(username, {
+            labels: labelData.labels,
+            assignments: labelData.assignments,
+        });
+    }, [labelData, username]);
 
     useEffect(() => {
         try {
@@ -163,7 +187,7 @@ function MainLayout() {
                         conversation.name === conversationName
                             ? {
                                 ...conversation,
-                                lastMessage: `${result.name}: ${result.mes}`,
+                                lastMessage: `You: ${result.mes}`,
                                 time: sentAt?.toLocaleTimeString("vi-VN", {
                                     hour: "2-digit",
                                     minute: "2-digit",
@@ -292,7 +316,10 @@ function MainLayout() {
             color,
         };
 
-        setLabels((prev) => [...prev, newLabel]);
+        setLabelData((prev) => ({
+            ...prev,
+            labels: [...prev.labels, newLabel],
+        }));
 
         return true;
     };
@@ -311,21 +338,28 @@ function MainLayout() {
 
         if (isDuplicate) return false;
 
-        setLabels((prev) =>
-            prev.map((label) =>
+        setLabelData((prev) => ({
+            ...prev,
+            labels: prev.labels.map((label) =>
                 label.id === id
                     ? { ...label, name: trimmedName, color }
                     : label
-            )
-        );
+            ),
+        }));
 
         return true;
     };
 
     const handleDeleteLabel = (id) => {
-        setLabels((prev) =>
-            prev.filter((label) => label.id !== id)
-        );
+        setLabelData((prev) => ({
+            ...prev,
+            labels: prev.labels.filter((label) => label.id !== id),
+            assignments: Object.fromEntries(
+                Object.entries(prev.assignments).filter(
+                    ([, labelId]) => labelId !== id
+                )
+            ),
+        }));
 
         setConversations((prev) =>
             prev.map((conversation) =>
@@ -337,19 +371,33 @@ function MainLayout() {
     };
 
     const handleAssignLabel = (conversationId, labelId) => {
+        const conversation = conversations.find(
+            (item) => String(item.id) === String(conversationId)
+        );
+
+        if (!conversation) return;
+
+        setLabelData((prev) => {
+            const assignments = { ...prev.assignments };
+
+            if (labelId) {
+                assignments[conversation.name] = labelId;
+            } else {
+                delete assignments[conversation.name];
+            }
+
+            return { ...prev, assignments };
+        });
+
         setConversations((prev) =>
-            prev.map((conversation) =>
-                conversation.id === conversationId
-                    ? {
-                        ...conversation,
-                        labelId: labelId,
-                    }
-                    : conversation
+            prev.map((item) =>
+                String(item.id) === String(conversationId)
+                    ? { ...item, labelId: labelId || null }
+                    : item
             )
         );
     };
 
-    const dispatch = useDispatch();
     const {
         users,  
         usersLoading,
@@ -363,8 +411,6 @@ function MainLayout() {
         sending,
         sendError,
     } = useSelector((state) => state.chat);
-
-    const authUser = useSelector((state) => state.auth.user);
 
     useEffect(() => {
         console.log("[AUTH USER]", authUser);
@@ -462,7 +508,7 @@ function MainLayout() {
                     lastMessage: existingConversation?.lastMessage || "",
                     timestamp,
                     unread: existingConversation?.unread || 0,
-                    labelId: existingConversation?.labelId || null,
+                    labelId: labelAssignments[user.name] || null,
                 };
             });
 
@@ -470,9 +516,8 @@ function MainLayout() {
                 (a, b) => b.timestamp - a.timestamp
             );
         });
-    }, [users, usersLoading]);
+    }, [users, usersLoading, labelAssignments]);
 
-    
     useEffect(() => {
         const unsubscribe = on("SEND_CHAT", (packet) => {
             console.log("[REALTIME] SEND_CHAT received:", packet);
@@ -515,7 +560,10 @@ function MainLayout() {
                             conversation.name === conversationName
                                 ? {
                                     ...conversation,
-                                    lastMessage: message.mes,
+                                    lastMessage: 
+                                        message.name === currentUsername
+                                            ? `You: ${message.mes}`
+                                            : message.mes,
                                     time: date.toLocaleTimeString("vi-VN", {
                                         hour: "2-digit",
                                         minute: "2-digit",
