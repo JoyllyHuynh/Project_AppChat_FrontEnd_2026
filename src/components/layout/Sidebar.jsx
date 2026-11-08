@@ -1,4 +1,4 @@
-
+import { useEffect } from "react";
 import {
     MessageCircle,
     Users,
@@ -11,17 +11,28 @@ import {
     Moon,
 } from "lucide-react";
 
-import { useDispatch } from "react-redux";
+import {useDispatch, useSelector} from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
 import { logout } from "../../store/authSlice";
+import { fetchNotifications, selectUnreadCount, } from "../../features/notifications/notificationSlice";
 
 function Sidebar({ theme, onToggleTheme }) {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const location = useLocation();
 
+    const unreadCount = useSelector(selectUnreadCount);
+    const notificationStatus = useSelector((state) => state.notifications.status);
+
     const isChatPage = location.pathname === "/chat";
     const isFriendsPage = location.pathname === "/friends";
+    const isNotificationsPage = location.pathname.startsWith("/notifications");
+
+    useEffect(() => {
+        if (notificationStatus === "idle") {
+            dispatch(fetchNotifications());
+        }
+    }, [notificationStatus, dispatch]);
 
     return (
         <aside className="sidebar">
@@ -54,10 +65,15 @@ function Sidebar({ theme, onToggleTheme }) {
                 <button className="nav-item" title="Groups">
                     <UsersRound size={22} />
                 </button>
-                
-                <button className="nav-item" title="Notifications">
+
+                <button
+                    className={`nav-item ${isNotificationsPage ? "active" : ""}`}
+                    title="Notifications"
+                    aria-label="Notifications"
+                    onClick={() => navigate("/notifications")}
+                >
                     <Bell size={22} />
-                    <span className="notification-dot"></span>
+                    {unreadCount > 0 && <span className="notification-dot"></span>}
                 </button>
 
             </nav>
