@@ -1,5 +1,3 @@
-const STORAGE_KEY = "webchat_conversation_labels";
-
 export const defaultLabels = [
     {
         id: "label-work",
@@ -28,40 +26,64 @@ export const defaultLabels = [
     },
 ];
 
-export function getConversationLabels() {
+const getStorageKey = (username) => {
+    const account = String(username || "guest")
+        .trim()
+        .toLowerCase();
+
+    return `webchat_user_preferences:${account}`;
+};
+
+export function getConversationLabelData(username) {
     try {
-        const storedLabels = localStorage.getItem(STORAGE_KEY);
+        const storedData = localStorage.getItem(
+            getStorageKey(username)
+        );
 
-        if (storedLabels === null) {
-            localStorage.setItem(
-                STORAGE_KEY,
-                JSON.stringify(defaultLabels)
-            );
-
-            return defaultLabels;
+        if (!storedData) {
+            return {
+                labels: defaultLabels,
+                assignments: {},
+            };
         }
 
-        const parsedLabels = JSON.parse(storedLabels);
+        const parsedData = JSON.parse(storedData);
 
-        return Array.isArray(parsedLabels)
-            ? parsedLabels
-            : defaultLabels;
+        return {
+            labels: Array.isArray(parsedData.labels)
+                ? parsedData.labels
+                : defaultLabels,
+
+            assignments:
+                parsedData.assignments &&
+                typeof parsedData.assignments === "object" &&
+                !Array.isArray(parsedData.assignments)
+                    ? parsedData.assignments
+                    : {},
+        };
     } catch (error) {
-        console.error("Cannot load conversation labels:", error);
-        return defaultLabels;
+        console.error("Cannot load conversation label data:", error);
+
+        return {
+            labels: defaultLabels,
+            assignments: {},
+        };
     }
 }
 
-export function saveConversationLabels(labels) {
+export function saveConversationLabelData(username, data) {
     try {
         localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify(labels)
+            getStorageKey(username),
+            JSON.stringify({
+                labels: data.labels,
+                assignments: data.assignments,
+            })
         );
 
         return true;
     } catch (error) {
-        console.error("Cannot save conversation labels:", error);
+        console.error("Cannot save conversation label data:", error);
         return false;
     }
 }

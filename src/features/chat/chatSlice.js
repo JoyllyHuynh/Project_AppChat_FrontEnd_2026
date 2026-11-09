@@ -130,7 +130,9 @@ const chatSlice = createSlice({
         messagesByUser: {},
         loadingByUser: {},
         errorByUser: {},
-
+        pinnedMessagesByUser: {},
+        editedMessagesByUser: {},
+        deletedMessagesByUser: {},
         sending: false,
         sendError: null,
     },
@@ -153,6 +155,84 @@ const chatSlice = createSlice({
                 state.messagesByUser[conversationName] || [],
                 [message]
             );
+        },
+
+        togglePinMessage: (state, action) => {
+            const { conversationName, message } = action.payload;
+
+            if (!conversationName || !message?.id) return;
+
+            const pinnedMessages =
+                state.pinnedMessagesByUser[conversationName] || [];
+
+            const isPinned = pinnedMessages.some(
+                (item) => String(item.id) === String(message.id)
+            );
+
+            if (isPinned) {
+                state.pinnedMessagesByUser[conversationName] =
+                    pinnedMessages.filter(
+                        (item) => String(item.id) !== String(message.id)
+                    );
+            } else {
+                state.pinnedMessagesByUser[conversationName] = [
+                    ...pinnedMessages,
+                    message,
+                ];
+            }
+        },
+
+        saveEditedMessage: (state, action) => {
+            const { conversationName, messageId, content } = action.payload;
+
+            if (
+                !conversationName ||
+                messageId == null ||
+                !content?.trim()
+            ) {
+                return;
+            }
+
+            if (!state.editedMessagesByUser[conversationName]) {
+                state.editedMessagesByUser[conversationName] = {};
+            }
+
+            state.editedMessagesByUser[conversationName][messageId] = content.trim();
+
+            const pinnedMessages = state.pinnedMessagesByUser[conversationName] || [];
+
+            const pinnedMessage = pinnedMessages.find(
+                (item) => String(item.id) === String(messageId)
+            );
+
+            if (pinnedMessage) {
+                pinnedMessage.content = content.trim();
+                pinnedMessage.mes = content.trim();
+            }
+        },
+
+        deleteMessageForMe: (state, action) => {
+            const { conversationName, messageId } = action.payload;
+
+            if (!conversationName || messageId == null) return;
+
+            if (!state.deletedMessagesByUser[conversationName]) {
+                state.deletedMessagesByUser[conversationName] = [];
+            }
+
+            const deletedIds = state.deletedMessagesByUser[conversationName];
+
+            const alreadyDeleted = deletedIds.some(
+                (id) => String(id) === String(messageId)
+            );
+
+            if (!alreadyDeleted) {
+                deletedIds.push(messageId);
+            }
+
+            state.pinnedMessagesByUser[conversationName] = (
+                state.pinnedMessagesByUser[conversationName] || []
+            ).filter((item) => String(item.id) !== String(messageId));
         },
     },
 
@@ -219,6 +299,9 @@ const chatSlice = createSlice({
 export const {
     clearChatMessages,
     receiveChatMessage,
+    togglePinMessage,
+    saveEditedMessage,
+    deleteMessageForMe,
 } = chatSlice.actions;
 
 export default chatSlice.reducer;
