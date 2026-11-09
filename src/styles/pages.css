@@ -372,3 +372,19 @@
         transform: rotate(360deg);
     }
 }
+
+.profile-status {
+    display: inline-flex;
+    align-items: center;
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+}
+
+.sidebar-avatar {
+    border-radius: 50%;
+}
+
+.sidebar-avatar.active {
+    box-shadow: 0 0 0 2px var(--color-primary);
+}
