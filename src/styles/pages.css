@@ -388,3 +388,11 @@
 .sidebar-avatar.active {
     box-shadow: 0 0 0 2px var(--color-primary);
 }
+
+.profile-label { margin-top: 18px;
+    align-self: flex-start;
+}
+
+.profile-label + .status-picker {
+    margin-top: 6px;
+}
