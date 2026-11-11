@@ -1,14 +1,18 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { AtSign, FileText, Mail, Pencil, Phone, Save, User, X } from "lucide-react";
+import { AtSign, Camera, FileText, Mail, Pencil, Phone, Save, Trash2, User, X } from "lucide-react";
 import Avatar from "../../../components/common/Avatar";
 import FormField from "../../../components/common/FormField";
 import Alert from "../../../components/common/Alert";
 import useFlashMessage from "../../../hooks/useFlashMessage";
-import { updateProfile } from "../../../store/authSlice";
+import { setUserStatus, updateProfile } from "../../../store/authSlice";
 import { validateProfile } from "../../../utils/validators";
+import { resizeImageToDataUrl, validateAvatarFile } from "../../../utils/image";
 
-const STATUS_LABEL = { online: "Online", offline: "Offline" };
+const STATUS_OPTIONS = [
+    { value: "online", label: "Online" },
+    { value: "offline", label: "Offline" },
+];
 
 const pickFields = ({ fullName, email, phone, bio }) => ({
     fullName: fullName || "",
@@ -22,6 +26,7 @@ function ProfilePage() {
     const user = useSelector((state) => state.auth.user);
     const saving = useSelector((state) => state.auth.saving);
     const flash = useFlashMessage();
+    const fileInputRef = useRef(null);
 
     const [editing, setEditing] = useState(false);
     const [form, setForm] = useState(() => pickFields(user || {}));
@@ -73,6 +78,51 @@ function ProfilePage() {
         }
     };
 
+    const handleAvatarPick = async (e) => {
+        const file = e.target.files?.[0];
+        e.target.value = "";
+        if (!file) return;
+
+        const problem = validateAvatarFile(file);
+        if (problem) {
+            flash.show("error", problem);
+            return;
+        }
+
+        try {
+            const dataUrl = await resizeImageToDataUrl(file);
+            const result = await dispatch(updateProfile({ avatar: dataUrl }));
+
+            if (updateProfile.fulfilled.match(result)) {
+                flash.show("success", "Avatar updated.");
+            } else {
+                flash.show("error", result.payload || "Could not update your avatar.");
+            }
+        } catch (err) {
+            flash.show("error", err.message);
+        }
+    };
+
+    const handleAvatarRemove = async () => {
+        const result = await dispatch(updateProfile({ avatar: null }));
+
+        if (updateProfile.fulfilled.match(result)) {
+            flash.show("success", "Avatar removed.");
+        } else {
+            flash.show("error", result.payload || "Could not remove your avatar.");
+        }
+    };
+
+    const handleStatusChange = async (status) => {
+        if (status === user.status) return;
+
+        const result = await dispatch(setUserStatus(status));
+
+        if (!setUserStatus.fulfilled.match(result)) {
+            flash.show("error", result.payload || "Could not change your status.");
+        }
+    };
+
     const rows = [
         { icon: User, label: "Full name", value: user.fullName },
         { icon: AtSign, label: "Username", value: `@${user.username}` },
@@ -105,10 +155,51 @@ function ProfilePage() {
                         />
                         <h2>{user.fullName}</h2>
                         <span className="muted">@{user.username}</span>
-                        <span className="profile-status">
-                            <span className={`status-dot ${user.status}`} />
-                            {STATUS_LABEL[user.status] || "Offline"}
-                        </span>
+
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp"
+                            hidden
+                            onChange={handleAvatarPick}
+                        />
+                        <div className="profile-actions">
+                            <button
+                                className="btn btn-primary"
+                                onClick={() => fileInputRef.current.click()}
+                                disabled={saving}
+                            >
+                                <Camera size={18} />
+                                {user.avatar ? "Change avatar" : "Upload avatar"}
+                            </button>
+
+                            {user.avatar && (
+                                <button
+                                    className="btn btn-ghost"
+                                    onClick={handleAvatarRemove}
+                                    disabled={saving}
+                                >
+                                    <Trash2 size={18} /> Remove
+                                </button>
+                            )}
+                        </div>
+                        <span className="field-hint">PNG, JPG or WebP. Up to 2 MB.</span>
+
+                        <span className="field-label profile-label">Status</span>
+                        <div className="status-picker" role="radiogroup" aria-label="Your status">
+                            {STATUS_OPTIONS.map((option) => (
+                                <button
+                                    key={option.value}
+                                    role="radio"
+                                    aria-checked={user.status === option.value}
+                                    className={`status-option ${user.status === option.value ? "active" : ""}`}
+                                    onClick={() => handleStatusChange(option.value)}
+                                >
+                                    <span className={`status-dot ${option.value}`} />
+                                    {option.label}
+                                </button>
+                            ))}
+                        </div>
                     </section>
 
                     <section className="card">
