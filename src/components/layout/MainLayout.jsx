@@ -7,7 +7,7 @@ import {currentUser,conversations as initialConversations,initialMessages,} from
 import {getConversationLabelData, saveConversationLabelData, generateLabelId,} from "../../features/chat/services/conversationLabelService";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUsers } from "../../features/user/userSlice";
-import { fetchChatMessages, sendChatMessage,receiveChatMessage, } from "../../features/chat/chatSlice";
+import { fetchChatMessages, fetchRoomChatMessages, sendChatMessage,receiveChatMessage,receiveRoomChatMessage, } from "../../features/chat/chatSlice";
 import { on } from "../../services/api/socketClient";
 import useTheme from "../../hooks/useTheme";
 
@@ -122,17 +122,21 @@ function MainLayout() {
 
         if (!selectedConversation) return;
 
-        if (selectedConversation.type !== 0) {
-            console.log("Đây không phải cuộc trò chuyện cá nhân.");
-            return;
+        if (Number(selectedConversation.type) === 1) {
+            dispatch(
+                fetchRoomChatMessages({
+                    name: selectedConversation.name,
+                    page: 1,
+                })
+            );
+        } else {
+            dispatch(
+                fetchChatMessages({
+                    name: selectedConversation.name,
+                    page: 1,
+                })
+            );
         }
-
-        dispatch(
-            fetchChatMessages({
-                name: selectedConversation.name,
-                page: 1,
-            })
-        );
     };
 
     const handleBackToConversationList = () => {
@@ -390,8 +394,11 @@ function MainLayout() {
 
     const {
         messagesByUser,
+        messagesByRoom,
         loadingByUser,
+        loadingByRoom,
         errorByUser,
+        errorByRoom,
         sending,
         sendError,
     } = useSelector((state) => state.chat);
@@ -404,15 +411,32 @@ function MainLayout() {
         (item) => item.id === activeId
     );
 
+    const personalConversations = conversations.filter(
+        (conversation) => Number(conversation.type) === 0
+    );
+
+    const groupConversations = conversations.filter(
+        (conversation) => Number(conversation.type) === 1
+    );
 
     const activeMessages = activeConversation
-        ? (messagesByUser[activeConversation.name] || [])
+        ? (
+            Number(activeConversation.type) === 1
+                ? messagesByRoom[activeConversation.name] || []
+                : messagesByUser[activeConversation.name] || []
+        )
             .map((message) => {
-                const date = parseMessageDate(message.createAt);
+                const date =
+                    parseMessageDate(message.createAt) ||
+                    parseMessageDate(message.createTime);
+
+                const isGroup = Number(activeConversation.type) === 1;
 
                 return {
                     id: message.id,
-                    senderId: message.name,
+                    senderId: isGroup
+                        ? message.own || message.name
+                        : message.name,
                     content: message.mes,
                     sentAt: date ? date.toISOString() : null,
                     time: date
@@ -502,9 +526,15 @@ function MainLayout() {
         });
     }, [users, usersLoading, labelAssignments]);
 
+    
     useEffect(() => {
         const unsubscribe = on("SEND_CHAT", (packet) => {
             console.log("[REALTIME] SEND_CHAT received:", packet);
+
+            if (packet.status === "error") {
+                console.error("[REALTIME] SEND_CHAT error:", packet.mes);
+                return;
+            }
 
             const payload = packet.data;
 
@@ -513,9 +543,67 @@ function MainLayout() {
                 : [payload];
 
             incomingMessages.forEach((message) => {
-                if (!message?.name || !message?.mes) return;
+                if (!message?.mes) return;
 
-                const currentUsername = authUser?.username;
+                const currentUsername = authUser?.username?.trim();
+
+                const date =
+                    parseMessageDate(message.createAt) ||
+                    parseMessageDate(message.createTime) ||
+                    new Date();
+
+                const normalizedMessage = {
+                    ...message,
+                    createAt: date.toISOString(),
+                };
+
+                if (message.type === "room") {
+                    const roomName = message.to;
+
+                    if (!roomName) {
+                        console.warn(
+                            "[REALTIME] Room message has no room name:",
+                            message
+                        );
+                        return;
+                    }
+
+                    dispatch(
+                        receiveRoomChatMessage({
+                            roomName,
+                            message: normalizedMessage,
+                        })
+                    );
+
+                    setConversations((prev) =>
+                        prev
+                            .map((conversation) =>
+                                conversation.name === roomName
+                                    ? {
+                                        ...conversation,
+                                        lastMessage:
+                                            message.name === currentUsername
+                                                ? `You: ${message.mes}`
+                                                : `${message.name || "Someone"}: ${message.mes}`,
+                                        time: date.toLocaleTimeString("vi-VN", {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                        }),
+                                        timestamp: date.getTime(),
+                                        unread:
+                                            message.name === currentUsername
+                                                ? conversation.unread
+                                                : activeIdRef.current === conversation.id
+                                                    ? 0
+                                                    : conversation.unread + 1,
+                                    }
+                                    : conversation
+                            )
+                            .sort((a, b) => b.timestamp - a.timestamp)
+                    );
+
+                    return;
+                }
 
                 const conversationName =
                     message.name === currentUsername
@@ -523,13 +611,6 @@ function MainLayout() {
                         : message.name;
 
                 if (!conversationName) return;
-
-                const date = parseMessageDate(message.createAt) || new Date();
-
-                const normalizedMessage = {
-                    ...message,
-                    createAt: date.toISOString(),
-                };
 
                 dispatch(
                     receiveChatMessage({
@@ -544,7 +625,7 @@ function MainLayout() {
                             conversation.name === conversationName
                                 ? {
                                     ...conversation,
-                                    lastMessage: 
+                                    lastMessage:
                                         message.name === currentUsername
                                             ? `You: ${message.mes}`
                                             : message.mes,
@@ -577,6 +658,7 @@ function MainLayout() {
             
             <ConversationList
                 conversations={conversations}
+                groupConversations={groupConversations}
                 activeId={activeId}
                 onSelect={handleSelectConversation}
 

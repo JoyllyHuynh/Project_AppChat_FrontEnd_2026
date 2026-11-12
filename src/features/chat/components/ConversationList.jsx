@@ -7,6 +7,7 @@ import {
     Pencil,
     Trash2,
     X,
+    Users,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -198,7 +199,7 @@ function ConversationList({
                     </button>
                 ))}
             </div>
-                        
+
             <div className="conversation-list">
                 {filteredConversations.length > 0 ? (
                     filteredConversations.map((conversation) => {
@@ -220,21 +221,38 @@ function ConversationList({
                                     }`}
                                     onClick={() => onSelect(conversation.id)}
                                 >
-                                    <div className="conversation-avatar">
-                                        <img
-                                            src={conversation.avatar}
-                                            alt={conversation.name}
-                                        />
-
-                                        {conversation.status === "online" && (
-                                            <span className="online-indicator"></span>
+                                    <div
+                                        className={`conversation-avatar ${
+                                            Number(conversation.type) === 1 ? "group-avatar" : ""
+                                        }`}
+                                    >
+                                        {Number(conversation.type) === 1 ? (
+                                            <Users size={23} />
+                                        ) : (
+                                            <img
+                                                src={conversation.avatar}
+                                                alt={conversation.name}
+                                            />
                                         )}
+
+                                        {Number(conversation.type) === 0 &&
+                                            conversation.status === "online" && (
+                                                <span className="online-indicator"></span>
+                                            )}
                                     </div>
 
                                     <div className="conversation-info">
                                         <div className="conversation-top">
-                                            <h4>{conversation.name}</h4>
+                                            <div className="conversation-name-wrapper">
+                                                <h4>{conversation.name}</h4>
 
+                                                {Number(conversation.type) === 1 && (
+                                                    <span className="group-chat-badge">
+                                                        <Users size={12} />
+                                                        Group
+                                                    </span>
+                                                )}
+                                            </div>
                                             <span className="conversation-time">
                                                 {conversation.time}
                                             </span>
@@ -333,8 +351,7 @@ function ConversationList({
                         No conversations found
                     </div>
                 )}
-            </div>
-
+            </div>    
 
             <div className="conversation-footer">
                 <span>{conversations.length} conversations</span>

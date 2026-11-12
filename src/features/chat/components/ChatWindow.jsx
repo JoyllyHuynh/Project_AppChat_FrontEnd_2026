@@ -15,6 +15,11 @@ import {
     PinOff,
     Check,
     Trash2,
+    FileText,
+    FileArchive,
+    FileSpreadsheet,
+    FileType,
+    File,
 } from "lucide-react";
 
     function getDateKey(timestamp) {
@@ -73,6 +78,39 @@ import {
         });
     }
 
+    function formatFileSize(bytes) {
+        if (bytes < 1024) {
+            return `${bytes} B`;
+        }
+
+        if (bytes < 1024 * 1024) {
+            return `${(bytes / 1024).toFixed(1)} KB`;
+        }
+
+        return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    }
+
+    function getFileType(fileName) {
+        const extension = fileName.split(".").pop().toLowerCase();
+
+        const types = {
+            pdf: { label: "PDF", icon: "pdf" },
+            doc: { label: "Word", icon: "word" },
+            docx: { label: "Word", icon: "word" },
+            xls: { label: "Excel", icon: "excel" },
+            xlsx: { label: "Excel", icon: "excel" },
+            ppt: { label: "PowerPoint", icon: "powerpoint" },
+            pptx: { label: "PowerPoint", icon: "powerpoint" },
+            txt: { label: "Text", icon: "text" },
+            zip: { label: "ZIP", icon: "archive" },
+        };
+
+        return types[extension] || {
+            label: "File",
+            icon: "file",
+        };
+    }
+
 function ChatWindow({
     conversation,
     messages,
@@ -97,6 +135,10 @@ function ChatWindow({
     const [showCopyToast, setShowCopyToast] = useState(false);
     const copyToastTimerRef = useRef(null);
     const dispatch = useDispatch();
+    const [selectedAttachments, setSelectedAttachments] = useState([]);
+    const fileInputRef = useRef(null);
+    const imageInputRef = useRef(null);
+    const selectedAttachmentsRef = useRef([]);
 
     const pinnedMessages =
         useSelector(
@@ -114,6 +156,21 @@ function ChatWindow({
         (state) =>
             state.chat.deletedMessagesByUser?.[conversation?.name] || []
     );
+    useEffect(() => {
+        setSelectedAttachments([]);
+        selectedAttachmentsRef.current = [];
+
+        return () => {
+            selectedAttachmentsRef.current.forEach((attachment) => {
+                if (attachment.previewUrl) {
+                    URL.revokeObjectURL(attachment.previewUrl);
+                }
+            });
+
+            selectedAttachmentsRef.current = [];
+        };
+    }, [conversation?.name]);
+
     useEffect(() => {
         if (activeMessageMenu === null) return;
 
@@ -189,6 +246,22 @@ function ChatWindow({
     }, {});
 
     const messageInputRef = useRef(null);
+
+    const renderAttachmentIcon = (fileName) => {
+        const type = getFileType(fileName);
+
+        const icons = {
+            pdf: <FileText size={23} className="file-icon-pdf" />,
+            word: <FileText size={23} className="file-icon-word" />,
+            excel: <FileSpreadsheet size={23} className="file-icon-excel" />,
+            powerpoint: <FileType size={23} className="file-icon-powerpoint" />,
+            text: <FileText size={23} className="file-icon-text" />,
+            archive: <FileArchive size={23} className="file-icon-archive" />,
+            file: <File size={23} />,
+        };
+
+        return icons[type.icon];
+    };
 
     const handleJumpToMessage = (messageId) => {
         const messageElement = document.getElementById(
@@ -287,6 +360,112 @@ function ChatWindow({
             e.preventDefault();
             handleSend();
         }
+    };
+
+    
+    const handleAttachmentChange = (event) => {
+        const files = Array.from(event.target.files || []);
+        const isImageInput = event.target === imageInputRef.current;
+
+        const MAX_FILE_SIZE = 20 * 1024 * 1024;
+        const MAX_ATTACHMENTS = 10;
+
+        const allowedDocumentExtensions = [
+            "pdf", "doc", "docx", "xls", "xlsx",
+            "ppt", "pptx", "txt", "zip"
+        ];
+
+        const validFiles = [];
+
+        files.forEach((file) => {
+            if (file.size > MAX_FILE_SIZE) {
+                alert(`${file.name} exceeds the 20 MB limit.`);
+                return;
+            }
+
+            if (isImageInput) {
+                if (!file.type.startsWith("image/")) {
+                    alert(`${file.name} is not a valid image.`);
+                    return;
+                }
+            } else {
+                const extension = file.name
+                    .split(".")
+                    .pop()
+                    .toLowerCase();
+
+                if (!allowedDocumentExtensions.includes(extension)) {
+                    alert(`${file.name} is not a supported document.`);
+                    return;
+                }
+            }
+
+            validFiles.push(file);
+        });
+
+        const remainingSlots =
+            MAX_ATTACHMENTS - selectedAttachmentsRef.current.length;
+
+        if (remainingSlots <= 0) {
+            alert("You can attach up to 10 files.");
+            event.target.value = "";
+            return;
+        }
+
+        const filesToAdd = validFiles.slice(0, remainingSlots);
+
+        if (validFiles.length > remainingSlots) {
+            alert("Only 10 attachments are allowed.");
+        }
+
+        const newAttachments = filesToAdd.map((file) => ({
+            id: `${Date.now()}-${Math.random()}`,
+            file,
+            previewUrl: file.type.startsWith("image/")
+                ? URL.createObjectURL(file)
+                : null,
+        }));
+
+        setSelectedAttachments((current) => {
+            const updated = [...current, ...newAttachments];
+
+            selectedAttachmentsRef.current = updated;
+
+            return updated;
+        });
+
+        event.target.value = "";
+    };
+
+    const handleRemoveAttachment = (attachmentId) => {
+        setSelectedAttachments((current) => {
+            const attachmentToRemove = current.find(
+                (item) => item.id === attachmentId
+            );
+
+            if (attachmentToRemove?.previewUrl) {
+                URL.revokeObjectURL(attachmentToRemove.previewUrl);
+            }
+
+            const updated = current.filter(
+                (item) => item.id !== attachmentId
+            );
+
+            selectedAttachmentsRef.current = updated;
+
+            return updated;
+        });
+    };
+
+    const handleClearAttachments = () => {
+        selectedAttachmentsRef.current.forEach((attachment) => {
+            if (attachment.previewUrl) {
+                URL.revokeObjectURL(attachment.previewUrl);
+            }
+        });
+
+        selectedAttachmentsRef.current = [];
+        setSelectedAttachments([]);
     };
 
     if (!conversation) {
@@ -738,6 +917,15 @@ function ChatWindow({
 
             <footer className="chat-input-area">
 
+                <input ref={fileInputRef} type="file" hidden multiple
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip"
+                    onChange={handleAttachmentChange}
+                />
+
+                <input ref={imageInputRef} type="file" hidden multiple accept="image/*"
+                    onChange={handleAttachmentChange}
+                />
+
                 {replyTo && (
                     <div className="reply-preview">
                         <div className="reply-preview-content">
@@ -784,20 +972,97 @@ function ChatWindow({
                     </div>
                 )}
 
-                <div className="chat-input-toolbar">
+                {selectedAttachments.length > 0 && (
+                    <div className="attachment-preview-list">
 
-                    <button className="icon-button" title="Attach file">
+                        <div className="attachment-preview-header">
+                            <div className="attachment-preview-heading">
+                                <span>Attachments</span>
+
+                                <span className="attachment-count">
+                                    {selectedAttachments.length}
+                                </span>
+                            </div>
+
+                            <button
+                                type="button"
+                                className="attachment-clear-button"
+                                onClick={handleClearAttachments}
+                            >
+                                Remove all
+                            </button>
+                        </div>
+
+                        <div className="attachment-preview-items">
+                        {selectedAttachments.map((attachment) => (
+                            <div
+                                className="attachment-preview-item"
+                                key={attachment.id}
+                            >
+                                {attachment.previewUrl ? (
+                                    <img
+                                        src={attachment.previewUrl}
+                                        alt={attachment.file.name}
+                                        className="attachment-preview-image"
+                                    />
+                                ) : (
+                                    <div className="attachment-preview-icon">
+                                        {renderAttachmentIcon(attachment.file.name)}
+                                    </div>
+                                )}
+
+                                <div className="attachment-preview-info">
+                                    <span
+                                        className="attachment-preview-name"
+                                        title={attachment.file.name}
+                                    >
+                                        {attachment.file.name}
+                                    </span>
+
+                                    <span className="attachment-preview-size">
+                                        {getFileType(attachment.file.name).label}
+                                        {" · "}
+                                        {formatFileSize(attachment.file.size)}
+                                    </span>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    className="attachment-remove-button"
+                                    title="Remove attachment"
+                                    onClick={() =>
+                                        handleRemoveAttachment(attachment.id)
+                                    }
+                                >
+                                    ×
+                                </button>
+
+                                </div>
+                                ))}
+                        </div>
+                    </div>
+                )}
+
+                {selectedAttachments.length > 0 && (
+                    <p className="attachment-notice">
+                        Attachments are for preview only and cannot be sent yet.
+                    </p>
+                )}
+
+                <div className="chat-input-toolbar">
+                    <button type="button" className="icon-button" title="Attach file"
+                        onClick={() => fileInputRef.current?.click()}>
                         <Paperclip size={19} />
                     </button>
 
-                    <button className="icon-button" title="Send image">
+                    <button type="button" className="icon-button" title="Send image"
+                        onClick={() => imageInputRef.current?.click()}>
                         <Image size={19} />
                     </button>
 
-                    <button className="icon-button" title="More attachments">
+                    <button type="button" className="icon-button" title="More attachments">
                         <Plus size={20} />
                     </button>
-
                 </div>
 
                 <div className="chat-input-box">

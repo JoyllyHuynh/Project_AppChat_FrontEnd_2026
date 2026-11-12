@@ -4,6 +4,16 @@ export const getUserList = async () => {
     try {
         const data = await request("GET_USER_LIST", {});
 
+        console.log("[GET_USER_LIST] Raw data:", data);
+
+        console.table(
+            data.map((item) => ({
+                name: item.name,
+                type: item.type,
+                actionTime: item.actionTime,
+            }))
+        );
+
         if (!Array.isArray(data)) {
             throw new Error("Dữ liệu danh sách người dùng không hợp lệ.");
         }
