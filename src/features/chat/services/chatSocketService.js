@@ -62,3 +62,70 @@ export const sendPeopleChatMessage = async (to, mes) => {
         throw error;
     }
 };
+
+/**
+ * Lấy lịch sử tin nhắn nhóm.
+ * @param {string} name
+ * @param {number} page
+ */
+export const getRoomChatMessages = async (name, page = 1) => {
+    try {
+        if (!name) {
+            throw new Error("Room name cannot be empty.");
+        }
+
+        const data = await request("GET_ROOM_CHAT_MES", {
+            name,
+            page,
+        });
+
+        console.log("[GET_ROOM_CHAT_MES] Room response:", data);
+        console.log("[GET_ROOM_CHAT_MES] Chat data:", data?.chatData);
+
+        if (!data || !Array.isArray(data.chatData)) {
+            throw new Error("Invalid room message history.");
+        }
+
+        return data.chatData;
+    } catch (error) {
+        console.error(
+            "[Chat API] GET_ROOM_CHAT_MES failed:",
+            error
+        );
+
+        throw error;
+    }
+};
+
+
+/**
+ * @param {string} to
+ * @param {string} mes
+ */
+export const sendRoomChatMessage = async (to, mes) => {
+    try {
+        if (!to || !mes?.trim()) {
+            throw new Error(
+                "Room name and message cannot be empty."
+            );
+        }
+
+        const trimmedMessage = mes.trim();
+
+        await send("SEND_CHAT", {
+            type: "room",
+            to,
+            mes: trimmedMessage,
+        });
+
+        return {
+            type: "room",
+            to,
+            mes: trimmedMessage,
+        };
+    } catch (error) {
+        console.error("[Chat API] SEND_CHAT room failed:", error);
+        throw error;
+    }
+};
+

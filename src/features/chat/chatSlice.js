@@ -1,7 +1,7 @@
 
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-import {getPeopleChatMessages, sendPeopleChatMessage,} from "./services/chatSocketService";
+import {getPeopleChatMessages, sendPeopleChatMessage,getRoomChatMessages, sendRoomChatMessage as sendRoomChatMessageService,} from "./services/chatSocketService";
 
 const parseMessageDate = (value) => {
     if (value == null) return null;
@@ -99,6 +99,48 @@ export const fetchChatMessages = createAsyncThunk(
     }
 );
 
+export const fetchRoomChatMessages = createAsyncThunk(
+    "chat/fetchRoomChatMessages",
+    async ({ name, page = 1 }, { rejectWithValue }) => {
+        try {
+            const messages = await getRoomChatMessages(name, page);
+
+            return {
+                name,
+                messages,
+                page,
+            };
+        } catch (error) {
+            return rejectWithValue({
+                name,
+                message:
+                    error.message || "Unable to load room messages.",
+            });
+        }
+    }
+);
+
+export const sendRoomMessage = createAsyncThunk(
+    "chat/sendRoomMessage",
+    async ({ to, mes, name }, { rejectWithValue }) => {
+        try {
+            const message = await sendRoomChatMessageService(to, mes);
+
+            return {
+                ...message,
+                name: name || "",
+                senderId: name || "",
+                mes: message.mes || mes.trim(),
+                createAt: new Date().toISOString(),
+            };
+        } catch (error) {
+            return rejectWithValue(
+                error.message || "Unable to send room message."
+            );
+        }
+    }
+);
+
 export const sendChatMessage = createAsyncThunk(
     "chat/sendChatMessage",
     async ({ to, mes, name }, { rejectWithValue }) => {
@@ -130,6 +172,11 @@ const chatSlice = createSlice({
         messagesByUser: {},
         loadingByUser: {},
         errorByUser: {},
+        messagesByRoom: {},
+        loadingByRoom: {},
+        errorByRoom: {},
+        sendingRoom: false,
+        sendRoomError: null,
         pinnedMessagesByUser: {},
         editedMessagesByUser: {},
         deletedMessagesByUser: {},
@@ -153,6 +200,17 @@ const chatSlice = createSlice({
 
             state.messagesByUser[conversationName] = mergeMessages(
                 state.messagesByUser[conversationName] || [],
+                [message]
+            );
+        },
+
+        receiveRoomChatMessage: (state, action) => {
+            const { roomName, message } = action.payload;
+
+            if (!roomName || !message) return;
+
+            state.messagesByRoom[roomName] = mergeMessages(
+                state.messagesByRoom[roomName] || [],
                 [message]
             );
         },
@@ -292,6 +350,61 @@ const chatSlice = createSlice({
                 state.sending = false;
                 state.sendError =
                     action.payload || "Không thể gửi tin nhắn.";
+            })
+
+            .addCase(fetchRoomChatMessages.pending, (state, action) => {
+                const { name } = action.meta.arg;
+
+                state.loadingByRoom[name] = true;
+                state.errorByRoom[name] = null;
+            })
+
+            .addCase(fetchRoomChatMessages.fulfilled, (state, action) => {
+                const { name, messages } = action.payload;
+
+                state.loadingByRoom[name] = false;
+                state.messagesByRoom[name] = mergeMessages(
+                    state.messagesByRoom[name] || [],
+                    messages
+                );
+                state.errorByRoom[name] = null;
+            })
+
+            .addCase(fetchRoomChatMessages.rejected, (state, action) => {
+                const name = action.payload?.name || action.meta.arg.name;
+
+                state.loadingByRoom[name] = false;
+                state.errorByRoom[name] =
+                    action.payload?.message ||
+                    action.error.message ||
+                    "Unable to load room messages.";
+            })
+
+            .addCase(sendRoomMessage.pending, (state) => {
+                state.sendingRoom = true;
+                state.sendRoomError = null;
+            })
+
+            .addCase(sendRoomMessage.fulfilled, (state, action) => {
+                state.sendingRoom = false;
+                state.sendRoomError = null;
+
+                const message = action.payload;
+
+                if (!message?.to || !message?.mes) return;
+
+                const roomName = message.to;
+
+                state.messagesByRoom[roomName] = mergeMessages(
+                    state.messagesByRoom[roomName] || [],
+                    [message]
+                );
+            })
+
+            .addCase(sendRoomMessage.rejected, (state, action) => {
+                state.sendingRoom = false;
+                state.sendRoomError =
+                    action.payload || "Unable to send room message.";
             });
     },
 });
@@ -299,6 +412,7 @@ const chatSlice = createSlice({
 export const {
     clearChatMessages,
     receiveChatMessage,
+    receiveRoomChatMessage,
     togglePinMessage,
     saveEditedMessage,
     deleteMessageForMe,
