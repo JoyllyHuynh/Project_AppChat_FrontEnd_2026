@@ -2250,3 +2250,14 @@ textarea:focus-visible {
     font-weight: 600;
     white-space: nowrap;
 }
+
+.message-avatar-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #e7efff;
+    color: #2563eb;
+    font-weight: 600;
+}

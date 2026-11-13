@@ -129,3 +129,32 @@ export const sendRoomChatMessage = async (to, mes) => {
     }
 };
 
+/**
+ * Tham gia phòng chat.
+ * @param {string} name
+ */
+export const joinRoom = async (name) => {
+    try {
+        const trimmedName = name?.trim();
+
+        if (!trimmedName) {
+            throw new Error("Room name cannot be empty.");
+        }
+
+        const data = await request("JOIN_ROOM", {
+            name: trimmedName,
+        });
+
+        console.log("[JOIN_ROOM] Room response:", data);
+
+        if (!data || !data.name) {
+            throw new Error("Invalid room information.");
+        }
+
+        return data;
+    } catch (error) {
+        console.error("[Chat API] JOIN_ROOM failed:", error);
+        throw error;
+    }
+};
+

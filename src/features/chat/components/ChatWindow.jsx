@@ -20,6 +20,8 @@ import {
     FileSpreadsheet,
     FileType,
     File,
+    Users,
+    UserRound,
 } from "lucide-react";
 
     function getDateKey(timestamp) {
@@ -575,16 +577,24 @@ function ChatWindow({
 
                         <div className="message-info-body">
                             <div className="message-info-sender">
-                                <img
-                                    src={
-                                        String(selectedMessageInfo.senderId).trim().toLowerCase() ===
-                                        String(currentUser.username || currentUser.id).trim().toLowerCase()
-                                            ? currentUser.avatar
-                                            : conversation.avatar
-                                    }
-                                    alt="Sender avatar"
-                                    className="message-info-avatar"
-                                />
+                                {String(selectedMessageInfo.senderId).trim().toLowerCase() ===
+                                String(currentUser.username || currentUser.id).trim().toLowerCase() ? (
+                                    currentUser.avatar ? (
+                                        <img
+                                            src={currentUser.avatar}
+                                            alt="Sender avatar"
+                                            className="message-info-avatar"
+                                        />
+                                    ) : (
+                                        <div className="message-info-avatar message-avatar-fallback">
+                                            {currentUser.username?.charAt(0).toUpperCase() || "?"}
+                                        </div>
+                                    )
+                                ) : (
+                                    <div className="message-info-avatar message-avatar-fallback">
+                                        {selectedMessageInfo.senderId?.charAt(0).toUpperCase() || "?"}
+                                    </div>
+                                )}
 
                                 <div className="message-info-sender-details">
                                     <p className="message-info-name">
@@ -624,10 +634,16 @@ function ChatWindow({
 
                 <div className="chat-user-info">
                     <div className="chat-header-avatar">
-                        <img
-                            src={conversation.avatar}
-                            alt={conversation.name}
-                        />
+                        {Number(conversation.type) === 1 ? (
+                            <Users size={24} />
+                        ) : conversation.avatar ? (
+                            <img
+                                src={conversation.avatar}
+                                alt={conversation.name}
+                            />
+                        ) : (
+                            <UserRound size={24} />
+                        )}
 
                         {conversation.status === "online" && (
                             <span className="online-indicator"></span>
@@ -771,11 +787,9 @@ function ChatWindow({
                                         }`}
                                     >
                                     {!isMine && (
-                                        <img
-                                            className="message-avatar"
-                                            src={conversation.avatar}
-                                            alt={conversation.name}
-                                        />
+                                        <div className="message-avatar message-avatar-fallback">
+                                            {item.senderId?.charAt(0).toUpperCase() || "?"}
+                                        </div>
                                     )}
 
                                     <div className="message-content">
