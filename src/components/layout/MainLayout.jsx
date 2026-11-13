@@ -7,9 +7,10 @@ import {currentUser,conversations as initialConversations,initialMessages,} from
 import {getConversationLabelData, saveConversationLabelData, generateLabelId,} from "../../features/chat/services/conversationLabelService";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUsers } from "../../features/user/userSlice";
-import { fetchChatMessages, fetchRoomChatMessages, sendChatMessage,receiveChatMessage,receiveRoomChatMessage, } from "../../features/chat/chatSlice";
+import { fetchChatMessages, fetchRoomChatMessages, sendChatMessage,sendRoomMessage,receiveChatMessage,receiveRoomChatMessage, } from "../../features/chat/chatSlice";
 import { on } from "../../services/api/socketClient";
 import useTheme from "../../hooks/useTheme";
+import { joinRoom } from "../../features/chat/services/chatSocketService";
 
 const parseMessageDate = (value) => {
     if (value == null) return null;
@@ -139,34 +140,193 @@ function MainLayout() {
         }
     };
 
+    const handleSearchUser = async (searchName) => {
+        const trimmedName = searchName.trim();
+
+        if (!trimmedName) return;
+
+        if (
+            trimmedName.toLowerCase() ===
+            authUser?.username?.trim().toLowerCase()
+        ) {
+            alert("Bạn không thể mở cuộc trò chuyện với chính mình.");
+            return;
+        }
+
+        const existingConversation = conversations.find(
+            (conversation) =>
+                conversation.name?.trim().toLowerCase() ===
+                trimmedName.toLowerCase()
+        );
+
+        if (existingConversation) {
+            handleSelectConversation(existingConversation.id);
+            return;
+        }
+
+        try {
+            await dispatch(
+                fetchChatMessages({
+                    name: trimmedName,
+                    page: 1,
+                })
+            ).unwrap();
+
+            const newConversation = {
+                id: trimmedName,
+                name: trimmedName,
+                type: 0,
+                avatar: `https://i.pravatar.cc/150?u=${encodeURIComponent(trimmedName)}`,
+                status: null,
+                time: "",
+                lastMessage: "",
+                timestamp: Date.now(),
+                unread: 0,
+                labelId: null,
+            };
+
+            setConversations((prev) => {
+                const alreadyExists = prev.some(
+                    (conversation) =>
+                        Number(conversation.type) === 0 &&
+                        conversation.name?.toLowerCase() ===
+                            trimmedName.toLowerCase()
+                );
+
+                if (alreadyExists) return prev;
+
+                return [newConversation, ...prev];
+            });
+
+            activeIdRef.current = newConversation.id;
+            setActiveId(newConversation.id);
+
+            console.log(
+                "[SEARCH] Opened new conversation:",
+                newConversation
+            );
+
+        } catch (error) {
+            console.error("[SEARCH] Cannot open user:", error);
+            alert(
+                error?.message ||
+                "Không thể mở cuộc trò chuyện với người dùng này."
+            );
+        }
+    };
+
+    const handleSearchRoom = async (searchName) => {
+        const trimmedName = searchName.trim();
+
+        if (!trimmedName) return;
+
+        const existingRoom = conversations.find(
+            (conversation) =>
+                Number(conversation.type) === 1 &&
+                conversation.name?.trim().toLowerCase() ===
+                    trimmedName.toLowerCase()
+        );
+
+        if (existingRoom) {
+            handleSelectConversation(existingRoom.id);
+            return;
+        }
+
+        try {
+            const roomData = await joinRoom(trimmedName);
+
+            const roomName = roomData.name || trimmedName;
+
+            const newRoom = {
+                id: roomName,
+                name: roomName,
+                type: 1,
+                avatar: "",
+                status: null,
+                time: "",
+                lastMessage: "",
+                timestamp: Date.now(),
+                unread: 0,
+                labelId: null,
+            };
+
+            setConversations((prev) => {
+                const alreadyExists = prev.some(
+                    (conversation) =>
+                        Number(conversation.type) === 1 &&
+                        conversation.name?.toLowerCase() ===
+                            roomName.toLowerCase()
+                );
+
+                if (alreadyExists) return prev;
+
+                return [newRoom, ...prev];
+            });
+
+            activeIdRef.current = newRoom.id;
+            setActiveId(newRoom.id);
+
+            await dispatch(
+                fetchRoomChatMessages({
+                    name: roomName,
+                    page: 1,
+                })
+            ).unwrap();
+
+            console.log("[SEARCH] Joined room successfully:", roomData);
+
+        } catch (error) {
+            console.error("[SEARCH] Cannot join room:", error);
+
+            alert(
+                error?.message ||
+                "Không thể tham gia phòng chat này."
+            );
+        }
+    };
+
     const handleBackToConversationList = () => {
         activeIdRef.current = null;
         setActiveId(null);
     };
 
-
+    
     const handleSendMessage = async (content) => {
         const trimmedContent = content.trim();
 
         if (!trimmedContent || !activeConversation) return;
 
-        if (activeConversation.type !== 0) {
-            console.warn("Hiện tại chỉ hỗ trợ gửi tin nhắn cá nhân.");
-            return;
-        }
-
         const conversationName = activeConversation.name;
+        const isGroup = Number(activeConversation.type) === 1;
 
         try {
-            const result = await dispatch(
-                sendChatMessage({
-                    to: conversationName,
-                    mes: trimmedContent,
-                    name: authUser?.username,
-                })
-            ).unwrap();
+            let result;
 
-            console.log("[SEND_CHAT] Success:", result);
+            if (isGroup) {
+                result = await dispatch(
+                    sendRoomMessage({
+                        to: conversationName,
+                        mes: trimmedContent,
+                        name: authUser?.username,
+                    })
+                ).unwrap();
+            } else {
+                result = await dispatch(
+                    sendChatMessage({
+                        to: conversationName,
+                        mes: trimmedContent,
+                        name: authUser?.username,
+                    })
+                ).unwrap();
+            }
+
+            console.log(
+                isGroup
+                    ? "[SEND_ROOM_CHAT] Success:"
+                    : "[SEND_CHAT] Success:",
+                result
+            );
+
             const sentAt = parseMessageDate(result.createAt);
 
             setConversations((prev) =>
@@ -188,7 +348,12 @@ function MainLayout() {
             );
 
         } catch (sendError) {
-            console.error("[SEND_CHAT] Failed:", sendError);
+            console.error(
+                isGroup
+                    ? "[SEND_ROOM_CHAT] Failed:"
+                    : "[SEND_CHAT] Failed:",
+                sendError
+            );
         }
     };
 
@@ -647,7 +812,6 @@ function MainLayout() {
                 );
             });
         });
-
         return () => unsubscribe();
     }, [dispatch, authUser?.username]);
 
@@ -661,6 +825,8 @@ function MainLayout() {
                 groupConversations={groupConversations}
                 activeId={activeId}
                 onSelect={handleSelectConversation}
+                onSearchUser={handleSearchUser}
+                onSearchRoom={handleSearchRoom}
 
                 labels={labels}
 

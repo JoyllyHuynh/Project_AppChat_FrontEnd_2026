@@ -16,6 +16,19 @@ export const fetchUsers = createAsyncThunk(
     }
 );
 
+export const searchServerUsers = createAsyncThunk(
+    "user/searchServerUsers",
+    async (_, { rejectWithValue }) => {
+        try {
+            return await getUserList();
+        } catch (error) {
+            return rejectWithValue(
+                error.message || "Unable to search users and rooms."
+            );
+        }
+    }
+);
+
 export const fetchFriends = createAsyncThunk(
     "user/fetchFriends",
     async (_, { rejectWithValue }) => {
@@ -51,6 +64,10 @@ const userSlice = createSlice({
         searchResults: [],
         searchLoading: false,
 
+        serverSearchResults: [],
+        serverSearchLoading: false,
+        serverSearchError: null,
+
         selectedUserProfile: null,
         error: null,
     },
@@ -65,6 +82,7 @@ const userSlice = createSlice({
         },
     },
 
+    
     extraReducers: (builder) => {
         builder
             .addCase(fetchUsers.pending, (state) => {
@@ -102,6 +120,19 @@ const userSlice = createSlice({
             .addCase(searchUsers.rejected, (state, action) => {
                 state.searchLoading = false;
                 state.error = action.payload;
+            })
+
+            .addCase(searchServerUsers.pending, (state) => {
+                state.serverSearchLoading = true;
+                state.serverSearchError = null;
+            })
+            .addCase(searchServerUsers.fulfilled, (state, action) => {
+                state.serverSearchLoading = false;
+                state.serverSearchResults = action.payload;
+            })
+            .addCase(searchServerUsers.rejected, (state, action) => {
+                state.serverSearchLoading = false;
+                state.serverSearchError = action.payload;
             });
     },
 });
