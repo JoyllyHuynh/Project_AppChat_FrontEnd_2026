@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Users, UsersRound, UserPlus, UserCheck, Search } from 'lucide-react';
 import '../../../styles/friend-sub-sidebar.css';
+import CreateRoomModal from '../../chat/components/CreateRoomModal';
 
 export const FriendSubSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [isCreateRoomOpen, setIsCreateRoomOpen] = useState(false);
 
   const isActive = (path) => {
     if (path === '/friends/list' && (location.pathname === '/friends' || location.pathname === '/friends/')) {
@@ -29,7 +31,12 @@ export const FriendSubSidebar = () => {
           <div className="sub-sidebar-action-btn" title="Thêm bạn">
             <UserPlus size={18} />
           </div>
-          <div className="sub-sidebar-action-btn" title="Tạo nhóm">
+          <div 
+            className="sub-sidebar-action-btn" 
+            title="Tạo nhóm"
+            onClick={() => setIsCreateRoomOpen(true)}
+            style={{ cursor: 'pointer' }}
+          >
             <UsersRound size={18} />
           </div>
         </div>
@@ -68,6 +75,13 @@ export const FriendSubSidebar = () => {
           <span className="sub-sidebar-text">Lời mời vào nhóm và cộng đồng</span>
         </div>
       </div>
+
+      <CreateRoomModal 
+        isOpen={isCreateRoomOpen}
+        onClose={() => setIsCreateRoomOpen(false)}
+        onSuccess={() => {
+        }}
+      />
     </div>
   );
 };
