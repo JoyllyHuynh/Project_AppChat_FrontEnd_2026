@@ -41,9 +41,36 @@ const getMessageTimestamp = (message) => {
         : Number.POSITIVE_INFINITY;
 };
 
+
 const areSameMessage = (first, second) => {
-    if (hasMessageId(first) && hasMessageId(second)) {
+    if (first._pending && second._pending) {
+        return false;
+    }
+
+    if (
+        hasMessageId(first) && 
+        hasMessageId(second)
+    ) {
         return String(first.id) === String(second.id);
+    }
+
+    const isPendingMatch =
+        first._pending !== second._pending;
+
+    if (isPendingMatch) {
+        const sameContent =
+            (first.name || first.own) === (second.name || second.own) &&
+            first.to === second.to &&
+            first.mes === second.mes;
+
+        if (!sameContent) return false;
+
+        const timeDifference = Math.abs(
+            getMessageTimestamp(first) -
+            getMessageTimestamp(second)
+        );
+
+        return timeDifference <= 60000;
     }
 
     return (
@@ -53,6 +80,7 @@ const areSameMessage = (first, second) => {
         getMessageTimestamp(first) === getMessageTimestamp(second)
     );
 };
+
 
 const mergeMessages = (currentMessages, newMessages) => {
     const merged = [...currentMessages];
@@ -68,6 +96,7 @@ const mergeMessages = (currentMessages, newMessages) => {
             merged[duplicateIndex] = {
                 ...merged[duplicateIndex],
                 ...message,
+                _pending: message._pending ?? false,
             };
         }
     });
@@ -128,10 +157,15 @@ export const sendRoomMessage = createAsyncThunk(
 
             return {
                 ...message,
+                id: `temp-${Date.now()}-${Math.random()}`,
                 name: name || "",
+                own: name || "",
                 senderId: name || "",
-                mes: message.mes || mes.trim(),
+                to,
+                type: 1,
+                mes: mes.trim(),
                 createAt: new Date().toISOString(),
+                _pending: true,
             };
         } catch (error) {
             return rejectWithValue(
@@ -330,20 +364,9 @@ const chatSlice = createSlice({
                 state.sendError = null;
             })
 
-            .addCase(sendChatMessage.fulfilled, (state, action) => {
+            .addCase(sendChatMessage.fulfilled, (state) => {
                 state.sending = false;
                 state.sendError = null;
-
-                const message = action.payload;
-
-                if (!message?.to || !message?.mes) return;
-
-                const conversationName = message.to;
-
-                state.messagesByUser[conversationName] = mergeMessages(
-                    state.messagesByUser[conversationName] || [],
-                    [message]
-                );
             })
 
             .addCase(sendChatMessage.rejected, (state, action) => {
