@@ -702,10 +702,20 @@ function MainLayout() {
             }
 
             const payload = packet.data;
+            console.log("[REALTIME DEBUG] Raw SEND_CHAT:", {
+                status: packet.status,
+                payload,
+                receivedAt: new Date().toISOString(),
+            });
 
             const incomingMessages = Array.isArray(payload)
                 ? payload
                 : [payload];
+
+            console.log(
+                "[REALTIME DEBUG] Number of messages:",
+                incomingMessages.length
+            );
 
             incomingMessages.forEach((message) => {
                 if (!message?.mes) return;
@@ -722,7 +732,11 @@ function MainLayout() {
                     createAt: date.toISOString(),
                 };
 
-                if (message.type === "room") {
+                const isRoomMessage =
+                    message.type === "room" ||
+                    Number(message.type) === 1;
+
+                if (isRoomMessage) {
                     const roomName = message.to;
 
                     if (!roomName) {

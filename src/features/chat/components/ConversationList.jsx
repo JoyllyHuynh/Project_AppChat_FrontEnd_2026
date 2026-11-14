@@ -224,44 +224,57 @@ function ConversationList({
 
                 <button
                     type="button"
+                    className="conversation-search-button"
                     onClick={handleServerSearch}
-                    disabled={serverSearchLoading}
+                    disabled={serverSearchLoading || !keyword.trim()}
                     title="Search"
                 >
-                    {serverSearchLoading ? "..." : "Search"}
+                    {serverSearchLoading ? (
+                        <span className="search-loading">...</span>
+                    ) : (
+                        <>
+                            <Search size={15} />
+                            <span>Search</span>
+                        </>
+                    )}
                 </button>
             </div>
 
             <div className="server-search-options">
-                <label>
-                    <input
-                        type="radio"
-                        name="searchMode"
-                        checked={searchMode === "all"}
-                        onChange={() => setSearchMode("all")}
-                    />
+                <button
+                    type="button"
+                    className={`search-mode-button ${
+                        searchMode === "all" ? "active" : ""
+                    }`}
+                    onClick={() => setSearchMode("all")}
+                    aria-pressed={searchMode === "all"}
+                >
                     All
-                </label>
+                </button>
 
-                <label>
-                    <input
-                        type="radio"
-                        name="searchMode"
-                        checked={searchMode === "rooms"}
-                        onChange={() => setSearchMode("rooms")}
-                    />
+                <button
+                    type="button"
+                    className={`search-mode-button ${
+                        searchMode === "rooms" ? "active" : ""
+                    }`}
+                    onClick={() => setSearchMode("rooms")}
+                    aria-pressed={searchMode === "rooms"}
+                >
+                    <Users size={14} />
                     Rooms
-                </label>
+                </button>
 
-                <label>
-                    <input
-                        type="radio"
-                        name="searchMode"
-                        checked={searchMode === "users"}
-                        onChange={() => setSearchMode("users")}
-                    />
+                <button
+                    type="button"
+                    className={`search-mode-button ${
+                        searchMode === "users" ? "active" : ""
+                    }`}
+                    onClick={() => setSearchMode("users")}
+                    aria-pressed={searchMode === "users"}
+                >
+                    <Users size={14} />
                     Users
-                </label>
+                </button>
             </div>
 
             <div className="conversation-label-filters">
