@@ -158,3 +158,43 @@ export const joinRoom = async (name) => {
     }
 };
 
+export const getUserList = async () => {
+    try {
+        const data = await request("GET_USER_LIST", {});
+
+        if (!Array.isArray(data)) {
+            throw new Error("Dữ liệu danh sách người dùng không hợp lệ.");
+        }
+
+        return data;
+    } catch (error) {
+        console.error("[Chat API] GET_USER_LIST failed:", error);
+        throw error;
+    }
+};
+
+
+export const createChatRoom = async (name) => {
+    try {
+        const trimmedName = name?.trim();
+
+        if (!trimmedName) {
+            throw new Error("Tên nhóm không được để trống.");
+        }
+
+        const data = await request("CREATE_ROOM", {
+            name: trimmedName,
+        });
+
+        console.log("[CREATE_ROOM] Response:", data);
+
+        if (!data) {
+            throw new Error("Không thể tạo nhóm chat.");
+        }
+
+        return data;
+    } catch (error) {
+        console.error("[Chat API] CREATE_ROOM failed:", error);
+        throw error;
+    }
+};

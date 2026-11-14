@@ -1,0 +1,143 @@
+.chat-info-panel {
+    width: 320px;
+    background-color: #ffffff;
+    border-left: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.chat-info-header {
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+    border-bottom: 1px solid #e5e7eb;
+    color: #111827;
+}
+
+.chat-info-main {
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.chat-info-avatar-group {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background-color: #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+    overflow: hidden;
+}
+
+.chat-info-group-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.chat-info-actions {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+    justify-content: space-around;
+}
+
+.chat-action-btn-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #4b5563;
+    font-size: 12px;
+}
+
+.chat-action-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #111827;
+}
+
+.chat-action-btn-item:hover .chat-action-icon {
+    background-color: #e5e7eb;
+}
+
+.chat-info-section {
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.chat-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    cursor: pointer;
+    background-color: #f9fafb;
+}
+
+.chat-section-header:hover {
+    background-color: #f3f4f6;
+}
+
+.member-list-container {
+    padding: 8px 16px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.member-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0;
+}
+
+.member-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.member-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.member-name {
+    font-size: 13px;
+    color: #111827;
+}
+
+.remove-member-btn {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.remove-member-btn:hover {
+    text-decoration: underline;
+}
