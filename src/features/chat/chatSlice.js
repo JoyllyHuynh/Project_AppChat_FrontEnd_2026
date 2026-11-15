@@ -1,7 +1,7 @@
 
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-import {getPeopleChatMessages, sendPeopleChatMessage,} from "./services/chatSocketService";
+import {getPeopleChatMessages, sendPeopleChatMessage,getRoomChatMessages, sendRoomChatMessage as sendRoomChatMessageService,} from "./services/chatSocketService";
 
 const parseMessageDate = (value) => {
     if (value == null) return null;
@@ -41,9 +41,36 @@ const getMessageTimestamp = (message) => {
         : Number.POSITIVE_INFINITY;
 };
 
+
 const areSameMessage = (first, second) => {
-    if (hasMessageId(first) && hasMessageId(second)) {
+    if (first._pending && second._pending) {
+        return false;
+    }
+
+    if (
+        hasMessageId(first) && 
+        hasMessageId(second)
+    ) {
         return String(first.id) === String(second.id);
+    }
+
+    const isPendingMatch =
+        first._pending !== second._pending;
+
+    if (isPendingMatch) {
+        const sameContent =
+            (first.name || first.own) === (second.name || second.own) &&
+            first.to === second.to &&
+            first.mes === second.mes;
+
+        if (!sameContent) return false;
+
+        const timeDifference = Math.abs(
+            getMessageTimestamp(first) -
+            getMessageTimestamp(second)
+        );
+
+        return timeDifference <= 60000;
     }
 
     return (
@@ -53,6 +80,7 @@ const areSameMessage = (first, second) => {
         getMessageTimestamp(first) === getMessageTimestamp(second)
     );
 };
+
 
 const mergeMessages = (currentMessages, newMessages) => {
     const merged = [...currentMessages];
@@ -68,6 +96,7 @@ const mergeMessages = (currentMessages, newMessages) => {
             merged[duplicateIndex] = {
                 ...merged[duplicateIndex],
                 ...message,
+                _pending: message._pending ?? false,
             };
         }
     });
@@ -95,6 +124,53 @@ export const fetchChatMessages = createAsyncThunk(
                 message:
                     error.message || "Không thể tải lịch sử tin nhắn.",
             });
+        }
+    }
+);
+
+export const fetchRoomChatMessages = createAsyncThunk(
+    "chat/fetchRoomChatMessages",
+    async ({ name, page = 1 }, { rejectWithValue }) => {
+        try {
+            const messages = await getRoomChatMessages(name, page);
+
+            return {
+                name,
+                messages,
+                page,
+            };
+        } catch (error) {
+            return rejectWithValue({
+                name,
+                message:
+                    error.message || "Unable to load room messages.",
+            });
+        }
+    }
+);
+
+export const sendRoomMessage = createAsyncThunk(
+    "chat/sendRoomMessage",
+    async ({ to, mes, name }, { rejectWithValue }) => {
+        try {
+            const message = await sendRoomChatMessageService(to, mes);
+
+            return {
+                ...message,
+                id: `temp-${Date.now()}-${Math.random()}`,
+                name: name || "",
+                own: name || "",
+                senderId: name || "",
+                to,
+                type: 1,
+                mes: mes.trim(),
+                createAt: new Date().toISOString(),
+                _pending: true,
+            };
+        } catch (error) {
+            return rejectWithValue(
+                error.message || "Unable to send room message."
+            );
         }
     }
 );
@@ -130,6 +206,11 @@ const chatSlice = createSlice({
         messagesByUser: {},
         loadingByUser: {},
         errorByUser: {},
+        messagesByRoom: {},
+        loadingByRoom: {},
+        errorByRoom: {},
+        sendingRoom: false,
+        sendRoomError: null,
         pinnedMessagesByUser: {},
         editedMessagesByUser: {},
         deletedMessagesByUser: {},
@@ -153,6 +234,17 @@ const chatSlice = createSlice({
 
             state.messagesByUser[conversationName] = mergeMessages(
                 state.messagesByUser[conversationName] || [],
+                [message]
+            );
+        },
+
+        receiveRoomChatMessage: (state, action) => {
+            const { roomName, message } = action.payload;
+
+            if (!roomName || !message) return;
+
+            state.messagesByRoom[roomName] = mergeMessages(
+                state.messagesByRoom[roomName] || [],
                 [message]
             );
         },
@@ -272,26 +364,70 @@ const chatSlice = createSlice({
                 state.sendError = null;
             })
 
-            .addCase(sendChatMessage.fulfilled, (state, action) => {
+            .addCase(sendChatMessage.fulfilled, (state) => {
                 state.sending = false;
                 state.sendError = null;
-
-                const message = action.payload;
-
-                if (!message?.to || !message?.mes) return;
-
-                const conversationName = message.to;
-
-                state.messagesByUser[conversationName] = mergeMessages(
-                    state.messagesByUser[conversationName] || [],
-                    [message]
-                );
             })
 
             .addCase(sendChatMessage.rejected, (state, action) => {
                 state.sending = false;
                 state.sendError =
                     action.payload || "Không thể gửi tin nhắn.";
+            })
+
+            .addCase(fetchRoomChatMessages.pending, (state, action) => {
+                const { name } = action.meta.arg;
+
+                state.loadingByRoom[name] = true;
+                state.errorByRoom[name] = null;
+            })
+
+            .addCase(fetchRoomChatMessages.fulfilled, (state, action) => {
+                const { name, messages } = action.payload;
+
+                state.loadingByRoom[name] = false;
+                state.messagesByRoom[name] = mergeMessages(
+                    state.messagesByRoom[name] || [],
+                    messages
+                );
+                state.errorByRoom[name] = null;
+            })
+
+            .addCase(fetchRoomChatMessages.rejected, (state, action) => {
+                const name = action.payload?.name || action.meta.arg.name;
+
+                state.loadingByRoom[name] = false;
+                state.errorByRoom[name] =
+                    action.payload?.message ||
+                    action.error.message ||
+                    "Unable to load room messages.";
+            })
+
+            .addCase(sendRoomMessage.pending, (state) => {
+                state.sendingRoom = true;
+                state.sendRoomError = null;
+            })
+
+            .addCase(sendRoomMessage.fulfilled, (state, action) => {
+                state.sendingRoom = false;
+                state.sendRoomError = null;
+
+                const message = action.payload;
+
+                if (!message?.to || !message?.mes) return;
+
+                const roomName = message.to;
+
+                state.messagesByRoom[roomName] = mergeMessages(
+                    state.messagesByRoom[roomName] || [],
+                    [message]
+                );
+            })
+
+            .addCase(sendRoomMessage.rejected, (state, action) => {
+                state.sendingRoom = false;
+                state.sendRoomError =
+                    action.payload || "Unable to send room message.";
             });
     },
 });
@@ -299,6 +435,7 @@ const chatSlice = createSlice({
 export const {
     clearChatMessages,
     receiveChatMessage,
+    receiveRoomChatMessage,
     togglePinMessage,
     saveEditedMessage,
     deleteMessageForMe,

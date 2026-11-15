@@ -62,3 +62,139 @@ export const sendPeopleChatMessage = async (to, mes) => {
         throw error;
     }
 };
+
+/**
+ * Lấy lịch sử tin nhắn nhóm.
+ * @param {string} name
+ * @param {number} page
+ */
+export const getRoomChatMessages = async (name, page = 1) => {
+    try {
+        if (!name) {
+            throw new Error("Room name cannot be empty.");
+        }
+
+        const data = await request("GET_ROOM_CHAT_MES", {
+            name,
+            page,
+        });
+
+        console.log("[GET_ROOM_CHAT_MES] Room response:", data);
+        console.log("[GET_ROOM_CHAT_MES] Chat data:", data?.chatData);
+
+        if (!data || !Array.isArray(data.chatData)) {
+            throw new Error("Invalid room message history.");
+        }
+
+        return data.chatData;
+    } catch (error) {
+        console.error(
+            "[Chat API] GET_ROOM_CHAT_MES failed:",
+            error
+        );
+
+        throw error;
+    }
+};
+
+
+/**
+ * @param {string} to
+ * @param {string} mes
+ */
+export const sendRoomChatMessage = async (to, mes) => {
+    try {
+        if (!to || !mes?.trim()) {
+            throw new Error(
+                "Room name and message cannot be empty."
+            );
+        }
+
+        const trimmedMessage = mes.trim();
+
+        await send("SEND_CHAT", {
+            type: "room",
+            to,
+            mes: trimmedMessage,
+        });
+
+        return {
+            type: "room",
+            to,
+            mes: trimmedMessage,
+        };
+    } catch (error) {
+        console.error("[Chat API] SEND_CHAT room failed:", error);
+        throw error;
+    }
+};
+
+/**
+ * Tham gia phòng chat.
+ * @param {string} name
+ */
+export const joinRoom = async (name) => {
+    try {
+        const trimmedName = name?.trim();
+
+        if (!trimmedName) {
+            throw new Error("Room name cannot be empty.");
+        }
+
+        const data = await request("JOIN_ROOM", {
+            name: trimmedName,
+        });
+
+        console.log("[JOIN_ROOM] Room response:", data);
+
+        if (!data || !data.name) {
+            throw new Error("Invalid room information.");
+        }
+
+        return data;
+    } catch (error) {
+        console.error("[Chat API] JOIN_ROOM failed:", error);
+        throw error;
+    }
+};
+
+export const getUserList = async () => {
+    try {
+        const data = await request("GET_USER_LIST", {});
+
+        if (!Array.isArray(data)) {
+            throw new Error("Dữ liệu danh sách người dùng không hợp lệ.");
+        }
+
+        return data;
+    } catch (error) {
+        console.error("[Chat API] GET_USER_LIST failed:", error);
+        throw error;
+    }
+};
+
+
+export const createChatRoom = async (name) => {
+    try {
+        const trimmedName = name?.trim();
+
+        if (!trimmedName) {
+            throw new Error("Tên nhóm không được để trống.");
+        }
+
+        const data = await request("CREATE_ROOM", {
+            name: trimmedName,
+        });
+
+        console.log("[CREATE_ROOM] Response:", data);
+
+        if (!data) {
+            throw new Error("Không thể tạo nhóm chat.");
+        }
+
+        return data;
+    } catch (error) {
+        console.error("[Chat API] CREATE_ROOM failed:", error);
+        throw error;
+    }
+};

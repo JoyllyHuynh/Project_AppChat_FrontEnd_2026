@@ -14,6 +14,7 @@ import {
 import {useDispatch, useSelector} from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
 import { logout } from "../../store/authSlice";
+import Avatar from "../common/Avatar";
 import { fetchNotifications, selectUnreadCount, } from "../../features/notifications/notificationSlice";
 
 function Sidebar({ theme, onToggleTheme }) {
@@ -21,12 +22,14 @@ function Sidebar({ theme, onToggleTheme }) {
     const navigate = useNavigate();
     const location = useLocation();
 
+    const user = useSelector((state) => state.auth.user);
     const unreadCount = useSelector(selectUnreadCount);
     const notificationStatus = useSelector((state) => state.notifications.status);
 
-    const isChatPage = location.pathname === "/chat";
-    const isFriendsPage = location.pathname === "/friends";
+    const isChatPage = location.pathname.startsWith("/chat");
+    const isFriendsPage = location.pathname.startsWith("/friends");
     const isNotificationsPage = location.pathname.startsWith("/notifications");
+    const isProfilePage = location.pathname.startsWith("/profile");
 
     useEffect(() => {
         if (notificationStatus === "idle") {
@@ -116,12 +119,18 @@ function Sidebar({ theme, onToggleTheme }) {
 
                 <div className="sidebar-divider"></div>
 
-                <button className="sidebar-avatar" title="Profile">
-                    <img
-                        src="https://i.pravatar.cc/150?img=12"
-                        alt="User avatar"
+                <button
+                    className={`sidebar-avatar ${isProfilePage ? "active" : ""}`}
+                    title="Profile"
+                    aria-label="Profile"
+                    onClick={() => navigate("/profile")}
+                >
+                    <Avatar
+                        name={user?.fullName}
+                        src={user?.avatar}
+                        size={40}
+                        status={user?.status}
                     />
-                    <span className="online-indicator"></span>
                 </button>
 
             </div>

@@ -11,6 +11,7 @@ import LoginPage from "../features/auth/pages/LoginPage";
 import RegisterPage from "../features/auth/pages/RegisterPage";
 import ForgotPasswordPage from "../features/auth/pages/ForgotPasswordPage";
 import NotificationsPage from "../features/notifications/pages/NotificationsPage";
+import ProfilePage from "../features/profile/pages/ProfilePage";
 
 function AppRoutes() {
     return (
@@ -27,6 +28,7 @@ function AppRoutes() {
                 <Route path="/chat" element={<MainLayout />} />
                 <Route element={<SidebarLayout />}>
                     <Route path="/notifications" element={<NotificationsPage />} />
+                    <Route path="/profile" element={<ProfilePage />} />
                 </Route>
 
                 <Route path="/friends" element={<FriendPage />}>

@@ -49,6 +49,13 @@ function handleMessage(message) {
 
     console.log("[WebSocket] Received event:", packet.event);
 
+    if (packet.event === "GET_ROOM_CHAT_MES") {
+        console.log(
+            "[GET_ROOM_CHAT_MES] Full server packet:",
+            JSON.stringify(packet, null, 2)
+        );
+    }
+
     const waiting = pending.get(packet.event);
     let responseIndex = 0;
 

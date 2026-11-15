@@ -1,7 +1,5 @@
 export const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-
 export const isUsername = (v) => /^[a-zA-Z0-9_]+$/.test(v);
-
 export const validateLogin = ({ username, password }) => {
     const e = {};
     if (!username.trim()) e.username = 'Enter your username.';
@@ -19,11 +17,13 @@ export const validateRegister = ({ username, password, confirmPassword, agree })
     return e;
 };
 
-export const validateProfile = ({ fullName, username, phone, bio }) => {
+export const validateProfile = ({ fullName, email, phone, bio }) => {
     const e = {};
-    if (fullName.trim().length < 2) e.fullName = 'Enter your full name.';
-    if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) e.username = '3–20 characters: letters, numbers, underscore.';
-    if (phone && !/^\+?\d{9,12}$/.test(phone.replace(/\s/g, ''))) e.phone = 'Enter a valid phone number.';
+    const name = fullName.trim();
+    if (name.length < 2) e.fullName = 'Enter your full name (at least 2 characters).';
+    else if (name.length > 50) e.fullName = 'Keep your name under 50 characters.';
+    if (email.trim() && !isEmail(email.trim())) e.email = 'Enter a valid email address.';
+    if (phone.trim() && !/^\+?\d{9,12}$/.test(phone.replace(/\s/g, ''))) e.phone = 'Enter a valid phone number.';
     if (bio.length > 160) e.bio = 'Keep your bio under 160 characters.';
     return e;
 };

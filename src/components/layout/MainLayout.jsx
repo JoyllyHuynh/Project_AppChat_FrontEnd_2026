@@ -7,9 +7,10 @@ import {currentUser,conversations as initialConversations,initialMessages,} from
 import {getConversationLabelData, saveConversationLabelData, generateLabelId,} from "../../features/chat/services/conversationLabelService";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUsers } from "../../features/user/userSlice";
-import { fetchChatMessages, sendChatMessage,receiveChatMessage, } from "../../features/chat/chatSlice";
+import { fetchChatMessages, fetchRoomChatMessages, sendChatMessage,sendRoomMessage,receiveChatMessage,receiveRoomChatMessage, } from "../../features/chat/chatSlice";
 import { on } from "../../services/api/socketClient";
 import useTheme from "../../hooks/useTheme";
+import { joinRoom } from "../../features/chat/services/chatSocketService";
 
 const parseMessageDate = (value) => {
     if (value == null) return null;
@@ -122,17 +123,166 @@ function MainLayout() {
 
         if (!selectedConversation) return;
 
-        if (selectedConversation.type !== 0) {
-            console.log("Đây không phải cuộc trò chuyện cá nhân.");
+        if (Number(selectedConversation.type) === 1) {
+            dispatch(
+                fetchRoomChatMessages({
+                    name: selectedConversation.name,
+                    page: 1,
+                })
+            );
+        } else {
+            dispatch(
+                fetchChatMessages({
+                    name: selectedConversation.name,
+                    page: 1,
+                })
+            );
+        }
+    };
+
+    const handleSearchUser = async (searchName) => {
+        const trimmedName = searchName.trim();
+
+        if (!trimmedName) return;
+
+        if (
+            trimmedName.toLowerCase() ===
+            authUser?.username?.trim().toLowerCase()
+        ) {
+            alert("Bạn không thể mở cuộc trò chuyện với chính mình.");
             return;
         }
 
-        dispatch(
-            fetchChatMessages({
-                name: selectedConversation.name,
-                page: 1,
-            })
+        const existingConversation = conversations.find(
+            (conversation) =>
+                conversation.name?.trim().toLowerCase() ===
+                trimmedName.toLowerCase()
         );
+
+        if (existingConversation) {
+            handleSelectConversation(existingConversation.id);
+            return;
+        }
+
+        try {
+            await dispatch(
+                fetchChatMessages({
+                    name: trimmedName,
+                    page: 1,
+                })
+            ).unwrap();
+
+            const newConversation = {
+                id: trimmedName,
+                name: trimmedName,
+                type: 0,
+                avatar: `https://i.pravatar.cc/150?u=${encodeURIComponent(trimmedName)}`,
+                status: null,
+                time: "",
+                lastMessage: "",
+                timestamp: Date.now(),
+                unread: 0,
+                labelId: null,
+            };
+
+            setConversations((prev) => {
+                const alreadyExists = prev.some(
+                    (conversation) =>
+                        Number(conversation.type) === 0 &&
+                        conversation.name?.toLowerCase() ===
+                            trimmedName.toLowerCase()
+                );
+
+                if (alreadyExists) return prev;
+
+                return [newConversation, ...prev];
+            });
+
+            activeIdRef.current = newConversation.id;
+            setActiveId(newConversation.id);
+
+            console.log(
+                "[SEARCH] Opened new conversation:",
+                newConversation
+            );
+
+        } catch (error) {
+            console.error("[SEARCH] Cannot open user:", error);
+            alert(
+                error?.message ||
+                "Không thể mở cuộc trò chuyện với người dùng này."
+            );
+        }
+    };
+
+    const handleSearchRoom = async (searchName) => {
+        const trimmedName = searchName.trim();
+
+        if (!trimmedName) return;
+
+        const existingRoom = conversations.find(
+            (conversation) =>
+                Number(conversation.type) === 1 &&
+                conversation.name?.trim().toLowerCase() ===
+                    trimmedName.toLowerCase()
+        );
+
+        if (existingRoom) {
+            handleSelectConversation(existingRoom.id);
+            return;
+        }
+
+        try {
+            const roomData = await joinRoom(trimmedName);
+
+            const roomName = roomData.name || trimmedName;
+
+            const newRoom = {
+                id: roomName,
+                name: roomName,
+                type: 1,
+                avatar: "",
+                status: null,
+                time: "",
+                lastMessage: "",
+                timestamp: Date.now(),
+                unread: 0,
+                labelId: null,
+            };
+
+            setConversations((prev) => {
+                const alreadyExists = prev.some(
+                    (conversation) =>
+                        Number(conversation.type) === 1 &&
+                        conversation.name?.toLowerCase() ===
+                            roomName.toLowerCase()
+                );
+
+                if (alreadyExists) return prev;
+
+                return [newRoom, ...prev];
+            });
+
+            activeIdRef.current = newRoom.id;
+            setActiveId(newRoom.id);
+
+            await dispatch(
+                fetchRoomChatMessages({
+                    name: roomName,
+                    page: 1,
+                })
+            ).unwrap();
+
+            console.log("[SEARCH] Joined room successfully:", roomData);
+
+        } catch (error) {
+            console.error("[SEARCH] Cannot join room:", error);
+
+            alert(
+                error?.message ||
+                "Không thể tham gia phòng chat này."
+            );
+        }
     };
 
     const handleBackToConversationList = () => {
@@ -140,29 +290,43 @@ function MainLayout() {
         setActiveId(null);
     };
 
-
+    
     const handleSendMessage = async (content) => {
         const trimmedContent = content.trim();
 
         if (!trimmedContent || !activeConversation) return;
 
-        if (activeConversation.type !== 0) {
-            console.warn("Hiện tại chỉ hỗ trợ gửi tin nhắn cá nhân.");
-            return;
-        }
-
         const conversationName = activeConversation.name;
+        const isGroup = Number(activeConversation.type) === 1;
 
         try {
-            const result = await dispatch(
-                sendChatMessage({
-                    to: conversationName,
-                    mes: trimmedContent,
-                    name: authUser?.username,
-                })
-            ).unwrap();
+            let result;
 
-            console.log("[SEND_CHAT] Success:", result);
+            if (isGroup) {
+                result = await dispatch(
+                    sendRoomMessage({
+                        to: conversationName,
+                        mes: trimmedContent,
+                        name: authUser?.username,
+                    })
+                ).unwrap();
+            } else {
+                result = await dispatch(
+                    sendChatMessage({
+                        to: conversationName,
+                        mes: trimmedContent,
+                        name: authUser?.username,
+                    })
+                ).unwrap();
+            }
+
+            console.log(
+                isGroup
+                    ? "[SEND_ROOM_CHAT] Success:"
+                    : "[SEND_CHAT] Success:",
+                result
+            );
+
             const sentAt = parseMessageDate(result.createAt);
 
             setConversations((prev) =>
@@ -184,7 +348,12 @@ function MainLayout() {
             );
 
         } catch (sendError) {
-            console.error("[SEND_CHAT] Failed:", sendError);
+            console.error(
+                isGroup
+                    ? "[SEND_ROOM_CHAT] Failed:"
+                    : "[SEND_CHAT] Failed:",
+                sendError
+            );
         }
     };
 
@@ -390,8 +559,11 @@ function MainLayout() {
 
     const {
         messagesByUser,
+        messagesByRoom,
         loadingByUser,
+        loadingByRoom,
         errorByUser,
+        errorByRoom,
         sending,
         sendError,
     } = useSelector((state) => state.chat);
@@ -404,15 +576,32 @@ function MainLayout() {
         (item) => item.id === activeId
     );
 
+    const personalConversations = conversations.filter(
+        (conversation) => Number(conversation.type) === 0
+    );
+
+    const groupConversations = conversations.filter(
+        (conversation) => Number(conversation.type) === 1
+    );
 
     const activeMessages = activeConversation
-        ? (messagesByUser[activeConversation.name] || [])
+        ? (
+            Number(activeConversation.type) === 1
+                ? messagesByRoom[activeConversation.name] || []
+                : messagesByUser[activeConversation.name] || []
+        )
             .map((message) => {
-                const date = parseMessageDate(message.createAt);
+                const date =
+                    parseMessageDate(message.createAt) ||
+                    parseMessageDate(message.createTime);
+
+                const isGroup = Number(activeConversation.type) === 1;
 
                 return {
                     id: message.id,
-                    senderId: message.name,
+                    senderId: isGroup
+                        ? message.own || message.name
+                        : message.name,
                     content: message.mes,
                     sentAt: date ? date.toISOString() : null,
                     time: date
@@ -502,20 +691,98 @@ function MainLayout() {
         });
     }, [users, usersLoading, labelAssignments]);
 
+    
     useEffect(() => {
         const unsubscribe = on("SEND_CHAT", (packet) => {
             console.log("[REALTIME] SEND_CHAT received:", packet);
 
+            if (packet.status === "error") {
+                console.error("[REALTIME] SEND_CHAT error:", packet.mes);
+                return;
+            }
+
             const payload = packet.data;
+            console.log("[REALTIME DEBUG] Raw SEND_CHAT:", {
+                status: packet.status,
+                payload,
+                receivedAt: new Date().toISOString(),
+            });
 
             const incomingMessages = Array.isArray(payload)
                 ? payload
                 : [payload];
 
-            incomingMessages.forEach((message) => {
-                if (!message?.name || !message?.mes) return;
+            console.log(
+                "[REALTIME DEBUG] Number of messages:",
+                incomingMessages.length
+            );
 
-                const currentUsername = authUser?.username;
+            incomingMessages.forEach((message) => {
+                if (!message?.mes) return;
+
+                const currentUsername = authUser?.username?.trim();
+
+                const date =
+                    parseMessageDate(message.createAt) ||
+                    parseMessageDate(message.createTime) ||
+                    new Date();
+
+                const normalizedMessage = {
+                    ...message,
+                    createAt: date.toISOString(),
+                };
+
+                const isRoomMessage =
+                    message.type === "room" ||
+                    Number(message.type) === 1;
+
+                if (isRoomMessage) {
+                    const roomName = message.to;
+
+                    if (!roomName) {
+                        console.warn(
+                            "[REALTIME] Room message has no room name:",
+                            message
+                        );
+                        return;
+                    }
+
+                    dispatch(
+                        receiveRoomChatMessage({
+                            roomName,
+                            message: normalizedMessage,
+                        })
+                    );
+
+                    setConversations((prev) =>
+                        prev
+                            .map((conversation) =>
+                                conversation.name === roomName
+                                    ? {
+                                        ...conversation,
+                                        lastMessage:
+                                            message.name === currentUsername
+                                                ? `You: ${message.mes}`
+                                                : `${message.name || "Someone"}: ${message.mes}`,
+                                        time: date.toLocaleTimeString("vi-VN", {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                        }),
+                                        timestamp: date.getTime(),
+                                        unread:
+                                            message.name === currentUsername
+                                                ? conversation.unread
+                                                : activeIdRef.current === conversation.id
+                                                    ? 0
+                                                    : conversation.unread + 1,
+                                    }
+                                    : conversation
+                            )
+                            .sort((a, b) => b.timestamp - a.timestamp)
+                    );
+
+                    return;
+                }
 
                 const conversationName =
                     message.name === currentUsername
@@ -523,13 +790,6 @@ function MainLayout() {
                         : message.name;
 
                 if (!conversationName) return;
-
-                const date = parseMessageDate(message.createAt) || new Date();
-
-                const normalizedMessage = {
-                    ...message,
-                    createAt: date.toISOString(),
-                };
 
                 dispatch(
                     receiveChatMessage({
@@ -544,7 +804,7 @@ function MainLayout() {
                             conversation.name === conversationName
                                 ? {
                                     ...conversation,
-                                    lastMessage: 
+                                    lastMessage:
                                         message.name === currentUsername
                                             ? `You: ${message.mes}`
                                             : message.mes,
@@ -566,7 +826,6 @@ function MainLayout() {
                 );
             });
         });
-
         return () => unsubscribe();
     }, [dispatch, authUser?.username]);
 
@@ -577,8 +836,11 @@ function MainLayout() {
             
             <ConversationList
                 conversations={conversations}
+                groupConversations={groupConversations}
                 activeId={activeId}
                 onSelect={handleSelectConversation}
+                onSearchUser={handleSearchUser}
+                onSearchRoom={handleSearchRoom}
 
                 labels={labels}
 
