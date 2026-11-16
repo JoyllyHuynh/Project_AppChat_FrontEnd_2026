@@ -4,22 +4,32 @@ export const getUserList = async () => {
     try {
         const data = await request("GET_USER_LIST", {});
 
+        console.log("[GET_USER_LIST] Raw data:", data);
+
         if (!Array.isArray(data)) {
-            throw new Error("Dữ liệu danh sách người dùng không hợp lệ.");
+            throw new Error("Invalid user list data.");
         }
+
+        console.table(
+            data.map((item) => ({
+                name: item.name,
+                type: item.type,
+                actionTime: item.actionTime,
+            }))
+        );
 
         return data.map((user) => ({
             id: user.name,
             name: user.name,
-            type: user.type,
+            type: Number(user.type),
             actionTime: user.actionTime,
         }));
     } catch (error) {
         console.error("[User API] GET_USER_LIST failed:", error);
-
         throw error;
     }
 };
+
 export const getFriendRequests = async () => {
     try {
         const data = await request("GET_FRIEND_REQUESTS", {});

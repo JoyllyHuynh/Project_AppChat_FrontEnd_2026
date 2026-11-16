@@ -1,4 +1,3 @@
-
 import {
     Search,
     Plus,
@@ -7,8 +6,11 @@ import {
     Pencil,
     Trash2,
     X,
+    Users,
 } from "lucide-react";
 import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { searchServerUsers } from "../../user/userSlice";
 
 const DEFAULT_LABEL_COLOR = "#3B82F6";
 
@@ -16,6 +18,8 @@ function ConversationList({
     conversations,
     activeId,
     onSelect,
+    onSearchUser,
+    onSearchRoom,
     labels = [],
     onCreateLabel,
     onUpdateLabel,
@@ -56,6 +60,29 @@ function ConversationList({
             conversation.labelId === activeLabelId;
 
         return matchesKeyword && matchesLabel;
+    });
+
+    const dispatch = useDispatch();
+
+    const {
+        serverSearchResults,
+        serverSearchLoading,
+        serverSearchError,
+    } = useSelector((state) => state.user);
+
+    const [searchMode, setSearchMode] = useState("all");
+    const [showSearchResults, setShowSearchResults] = useState(false);
+
+    const filteredServerSearchResults = serverSearchResults.filter((item) => {
+        const name = (item.name || "").trim().toLocaleLowerCase("vi");
+        const matchesKeyword = name.includes(normalizedKeyword);
+
+        const matchesMode =
+            searchMode === "all" ||
+            (searchMode === "rooms" && Number(item.type) === 1) ||
+            (searchMode === "users" && Number(item.type) === 0);
+
+        return matchesKeyword && matchesMode;
     });
 
     const handleOpenCreateForm = () => {
@@ -119,6 +146,24 @@ function ConversationList({
         }
     };
 
+    const handleServerSearch = async () => {
+        const trimmedKeyword = keyword.trim();
+
+        if (!trimmedKeyword) return;
+
+        try {
+            setShowSearchResults(false);
+
+            if (searchMode === "rooms") {
+                await onSearchRoom(trimmedKeyword);
+            } else {
+                await onSearchUser(trimmedKeyword);
+            }
+        } catch (error) {
+            console.error("[SEARCH] Failed:", error);
+        }
+    };
+
     return (
         <section className="conversation-panel">
 
@@ -164,10 +209,72 @@ function ConversationList({
 
                 <input
                     type="text"
-                    placeholder="Search conversations..."
+                    placeholder="Search users or rooms..."
                     value={keyword}
-                    onChange={(e) => setKeyword(e.target.value)}
+                    onChange={(e) => {
+                        setKeyword(e.target.value);
+                        setShowSearchResults(false);
+                    }}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                            handleServerSearch();
+                        }
+                    }}
                 />
+
+                <button
+                    type="button"
+                    className="conversation-search-button"
+                    onClick={handleServerSearch}
+                    disabled={serverSearchLoading || !keyword.trim()}
+                    title="Search"
+                >
+                    {serverSearchLoading ? (
+                        <span className="search-loading">...</span>
+                    ) : (
+                        <>
+                            <Search size={15} />
+                            <span>Search</span>
+                        </>
+                    )}
+                </button>
+            </div>
+
+            <div className="server-search-options">
+                <button
+                    type="button"
+                    className={`search-mode-button ${
+                        searchMode === "all" ? "active" : ""
+                    }`}
+                    onClick={() => setSearchMode("all")}
+                    aria-pressed={searchMode === "all"}
+                >
+                    All
+                </button>
+
+                <button
+                    type="button"
+                    className={`search-mode-button ${
+                        searchMode === "rooms" ? "active" : ""
+                    }`}
+                    onClick={() => setSearchMode("rooms")}
+                    aria-pressed={searchMode === "rooms"}
+                >
+                    <Users size={14} />
+                    Rooms
+                </button>
+
+                <button
+                    type="button"
+                    className={`search-mode-button ${
+                        searchMode === "users" ? "active" : ""
+                    }`}
+                    onClick={() => setSearchMode("users")}
+                    aria-pressed={searchMode === "users"}
+                >
+                    <Users size={14} />
+                    Users
+                </button>
             </div>
 
             <div className="conversation-label-filters">
@@ -198,9 +305,74 @@ function ConversationList({
                     </button>
                 ))}
             </div>
-                        
+
             <div className="conversation-list">
-                {filteredConversations.length > 0 ? (
+                {showSearchResults ? (
+                    <>
+                        <div className="search-results-header">
+                            Search results ({filteredServerSearchResults.length})
+                        </div>
+
+                        {serverSearchLoading ? (
+                            <div className="empty-conversation">
+                                Searching...
+                            </div>
+                        ) : serverSearchError ? (
+                            <div className="empty-conversation">
+                                {serverSearchError}
+                            </div>
+                        ) : filteredServerSearchResults.length > 0 ? (
+                            filteredServerSearchResults.map((item) => (
+                                <button
+                                    type="button"
+                                    key={`${item.type}-${item.id}`}
+                                    className="conversation-item"
+                                    onClick={() => {
+                                        const existing = conversations.find(
+                                            (conversation) =>
+                                                String(conversation.id) === String(item.id)
+                                        );
+
+                                        if (existing) {
+                                            onSelect(existing.id);
+                                        } else {
+                                            console.warn(
+                                                "[SEARCH] Result not in conversations:",
+                                                item
+                                            );
+                                        }
+                                    }}
+                                >
+                                    <div className={`conversation-avatar ${
+                                        Number(item.type) === 1 ? "group-avatar" : ""
+                                    }`}>
+                                        {Number(item.type) === 1 ? (
+                                            <Users size={23} />
+                                        ) : (
+                                            <span>
+                                                {item.name?.charAt(0)?.toUpperCase()}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <div className="conversation-info">
+                                        <div className="conversation-name-wrapper">
+                                            <h4>{item.name}</h4>
+                                            <span className="group-chat-badge">
+                                                {Number(item.type) === 1 ? "Group" : "User"}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </button>
+                            ))
+                        ) : (
+                            <div className="empty-conversation">
+                                No search results found
+                            </div>
+                        )}
+                    </>
+                ) : (
+                filteredConversations.length > 0 ? (
                     filteredConversations.map((conversation) => {
                         const assignedLabel = labels.find(
                             (label) => label.id === conversation.labelId
@@ -220,21 +392,38 @@ function ConversationList({
                                     }`}
                                     onClick={() => onSelect(conversation.id)}
                                 >
-                                    <div className="conversation-avatar">
-                                        <img
-                                            src={conversation.avatar}
-                                            alt={conversation.name}
-                                        />
-
-                                        {conversation.status === "online" && (
-                                            <span className="online-indicator"></span>
+                                    <div
+                                        className={`conversation-avatar ${
+                                            Number(conversation.type) === 1 ? "group-avatar" : ""
+                                        }`}
+                                    >
+                                        {Number(conversation.type) === 1 ? (
+                                            <Users size={23} />
+                                        ) : (
+                                            <img
+                                                src={conversation.avatar}
+                                                alt={conversation.name}
+                                            />
                                         )}
+
+                                        {Number(conversation.type) === 0 &&
+                                            conversation.status === "online" && (
+                                                <span className="online-indicator"></span>
+                                            )}
                                     </div>
 
                                     <div className="conversation-info">
                                         <div className="conversation-top">
-                                            <h4>{conversation.name}</h4>
+                                            <div className="conversation-name-wrapper">
+                                                <h4>{conversation.name}</h4>
 
+                                                {Number(conversation.type) === 1 && (
+                                                    <span className="group-chat-badge">
+                                                        <Users size={12} />
+                                                        Group
+                                                    </span>
+                                                )}
+                                            </div>
                                             <span className="conversation-time">
                                                 {conversation.time}
                                             </span>
@@ -332,9 +521,9 @@ function ConversationList({
                     <div className="empty-conversation">
                         No conversations found
                     </div>
+                )
                 )}
-            </div>
-
+            </div>    
 
             <div className="conversation-footer">
                 <span>{conversations.length} conversations</span>
