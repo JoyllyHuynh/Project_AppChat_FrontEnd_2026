@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useLayoutEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { togglePinMessage, saveEditedMessage, deleteMessageForMe, } from "../chatSlice";
 import ChatInfoPanel from "./ChatInfoPanel";
+import AddMemberModal from "./AddMemberModal";
 import {
     ArrowLeft,
     Phone,
@@ -121,6 +122,7 @@ function ChatWindow({
     onSendMessage,
     onBack,
 }) {
+    const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
     const [message, setMessage] = useState("");
     const [activeMessageMenu, setActiveMessageMenu] = useState(null);
     const [replyTo, setReplyTo] = useState(null);
@@ -585,7 +587,7 @@ function ChatWindow({
                         <div className="message-info-body">
                             <div className="message-info-sender">
                                 {String(selectedMessageInfo.senderId).trim().toLowerCase() ===
-                                String(currentUser.username || currentUser.id).trim().toLowerCase() ? (
+                                    String(currentUser.username || currentUser.id).trim().toLowerCase() ? (
                                     currentUser.avatar ? (
                                         <img
                                             src={currentUser.avatar}
@@ -631,7 +633,7 @@ function ChatWindow({
 
             {/* --- CONTAINER CHIA 2 CỘT: CỘT TRÁI LÀ KHUNG CHAT, CỘT PHẢI LÀ PANEL THÔNG TIN NHÓM --- */}
             <div style={{ display: "flex", flex: 1, width: "100%", height: "100%", overflow: "hidden" }}>
-                
+
                 {/* Cột bên trái chứa toàn bộ giao diện chat cũ của bạn */}
                 <div style={{ display: "flex", flexDirection: "column", flex: 1, height: "100%", overflow: "hidden" }}>
 
@@ -1129,12 +1131,10 @@ function ChatWindow({
 
                 {/* Cột bên phải: Bảng thông tin nhóm (chỉ hiện khi bật `isInfoPanelOpen`) */}
                 {isInfoPanelOpen && (
-                    <ChatInfoPanel 
-                        roomName={conversation.name} 
+                    <ChatInfoPanel
+                        roomName={conversation.name}
                         members={groupMembers}
-                        onAddMember={() => {
-                            alert('Mở modal thêm thành viên');
-                        }}
+                        onAddMember={() => setIsAddMemberOpen(true)}
                         onRemoveMember={(memberName) => {
                             setGroupMembers(prev => prev.filter(m => (m.name || m) !== memberName));
                         }}
@@ -1142,6 +1142,16 @@ function ChatWindow({
                 )}
 
             </div>
+
+            <AddMemberModal
+                isOpen={isAddMemberOpen}
+                onClose={() => setIsAddMemberOpen(false)}
+                existingMembers={groupMembers.map(m => m.name || m)}
+                onAddMembers={(newMemberIds) => {
+                    const addedMembersFormatted = newMemberIds.map(id => ({ name: id, avatar: '' }));
+                    setGroupMembers(prev => [...prev, ...addedMembersFormatted]);
+                }}
+            />
 
         </main>
     );
