@@ -14,6 +14,7 @@ import {
     Image,
     Plus,
     Pin,
+    Pencil,
     PinOff,
     Check,
     Trash2,
@@ -144,7 +145,22 @@ function ChatWindow({
     const fileInputRef = useRef(null);
     const imageInputRef = useRef(null);
     const selectedAttachmentsRef = useRef([]);
+    const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+    const [newGroupName, setNewGroupName] = useState('');
 
+    const handleSaveRoomName = () => {
+        if (!newGroupName.trim()) return;
+
+        const trimmedName = newGroupName.trim();
+        const roomId = conversation.id || conversation._id;
+
+        if (typeof onUpdateConversationName === 'function') {
+            onUpdateConversationName(roomId, trimmedName);
+        }
+
+        conversation.customName = trimmedName;
+        setIsRenameModalOpen(false);
+    };
     const pinnedMessages =
         useSelector(
             (state) =>
@@ -273,6 +289,8 @@ function ChatWindow({
 
         return icons[type.icon];
     };
+
+
 
     const handleJumpToMessage = (messageId) => {
         const messageElement = document.getElementById(
@@ -666,16 +684,118 @@ function ChatWindow({
                             </div>
 
                             <div className="chat-user-details">
-                                <h3 title={conversation.name}>
-                                    {conversation.name}
-                                </h3>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <h3 title={conversation.customName || conversation.name} style={{ margin: 0 }}>
+                                        {conversation.customName || conversation.name}
+                                    </h3>
 
-                                <p>
-                                    {conversation.status === "online"
-                                        ? "Active now"
-                                        : "Offline"}
+
+                                    <button
+                                        type="button"
+                                        className="icon-button"
+                                        title="Đổi tên nhóm"
+                                        onClick={() => {
+                                            setNewGroupName(conversation.customName || conversation.name || '');
+                                            setIsRenameModalOpen(true);
+                                        }}
+                                        style={{
+                                            background: 'transparent',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            padding: '4px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            color: '#666',
+                                            borderRadius: '4px'
+                                        }}
+                                    >
+                                        ✏️
+                                    </button>
+                                </div>
+
+                                <p style={{ margin: 0 }}>
+                                    {conversation.status === "online" ? "Active now" : "Offline"}
                                 </p>
                             </div>
+
+                            {isRenameModalOpen && (
+                                <div style={{
+                                    position: 'fixed',
+                                    top: 0,
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 0,
+                                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    zIndex: 1000
+                                }}>
+                                    <div style={{
+                                        backgroundColor: '#fff',
+                                        padding: '24px',
+                                        borderRadius: '8px',
+                                        width: '400px',
+                                        boxShadow: '0 4px 16px rgba(0,0,0,0.15)'
+                                    }}>
+                                        <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: 'bold', color: '#333' }}>
+                                            Đổi tên nhóm
+                                        </h3>
+                                        <input
+                                            type="text"
+                                            value={newGroupName}
+                                            onChange={(e) => setNewGroupName(e.target.value)}
+                                            placeholder="Nhập tên nhóm mới..."
+                                            autoFocus
+                                            style={{
+                                                width: '100%',
+                                                padding: '10px 12px',
+                                                borderRadius: '6px',
+                                                border: '1px solid #ccc',
+                                                outline: 'none',
+                                                fontSize: '14px',
+                                                marginBottom: '20px',
+                                                boxSizing: 'border-box'
+                                            }}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') handleSaveRoomName();
+                                                else if (e.key === 'Escape') setIsRenameModalOpen(false);
+                                            }}
+                                        />
+                                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsRenameModalOpen(false)}
+                                                style={{
+                                                    padding: '8px 16px',
+                                                    borderRadius: '6px',
+                                                    border: '1px solid #ccc',
+                                                    background: '#fff',
+                                                    cursor: 'pointer',
+                                                    fontWeight: '500'
+                                                }}
+                                            >
+                                                Hủy
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={handleSaveRoomName}
+                                                style={{
+                                                    padding: '8px 16px',
+                                                    borderRadius: '6px',
+                                                    border: 'none',
+                                                    background: '#0068ff',
+                                                    color: '#fff',
+                                                    cursor: 'pointer',
+                                                    fontWeight: '500'
+                                                }}
+                                            >
+                                                Lưu
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div className="chat-header-actions">
@@ -1132,7 +1252,7 @@ function ChatWindow({
                 {/* Cột bên phải: Bảng thông tin nhóm (chỉ hiện khi bật `isInfoPanelOpen`) */}
                 {isInfoPanelOpen && (
                     <ChatInfoPanel
-                        roomName={conversation.name}
+                        roomName={conversation.customName || conversation.name}
                         members={groupMembers}
                         onAddMember={() => setIsAddMemberOpen(true)}
                         onRemoveMember={(memberName) => {

@@ -25,6 +25,7 @@ function ConversationList({
     onUpdateLabel,
     onDeleteLabel,
     onAssignLabel,
+    onUpdateConversationName,
 }) {
     const [keyword, setKeyword] = useState("");
 
@@ -49,9 +50,8 @@ function ConversationList({
         : "all";
 
     const filteredConversations = conversations.filter((conversation) => {
-        const conversationName = (conversation.name || "")
-            .trim()
-            .toLocaleLowerCase("vi");
+        const displayName = conversation.customName || conversation.name || "";
+        const conversationName = displayName.trim().toLocaleLowerCase("vi");
 
         const matchesKeyword = conversationName.includes(normalizedKeyword);
 
@@ -85,12 +85,14 @@ function ConversationList({
         return matchesKeyword && matchesMode;
     });
 
+
     const handleOpenCreateForm = () => {
         setEditingLabel(null);
         setLabelName("");
         setLabelColor(DEFAULT_LABEL_COLOR);
         setLabelError("");
     };
+
 
     const handleOpenEditForm = (label) => {
         setEditingLabel(label);
@@ -243,9 +245,8 @@ function ConversationList({
             <div className="server-search-options">
                 <button
                     type="button"
-                    className={`search-mode-button ${
-                        searchMode === "all" ? "active" : ""
-                    }`}
+                    className={`search-mode-button ${searchMode === "all" ? "active" : ""
+                        }`}
                     onClick={() => setSearchMode("all")}
                     aria-pressed={searchMode === "all"}
                 >
@@ -254,9 +255,8 @@ function ConversationList({
 
                 <button
                     type="button"
-                    className={`search-mode-button ${
-                        searchMode === "rooms" ? "active" : ""
-                    }`}
+                    className={`search-mode-button ${searchMode === "rooms" ? "active" : ""
+                        }`}
                     onClick={() => setSearchMode("rooms")}
                     aria-pressed={searchMode === "rooms"}
                 >
@@ -266,9 +266,8 @@ function ConversationList({
 
                 <button
                     type="button"
-                    className={`search-mode-button ${
-                        searchMode === "users" ? "active" : ""
-                    }`}
+                    className={`search-mode-button ${searchMode === "users" ? "active" : ""
+                        }`}
                     onClick={() => setSearchMode("users")}
                     aria-pressed={searchMode === "users"}
                 >
@@ -280,9 +279,8 @@ function ConversationList({
             <div className="conversation-label-filters">
                 <button
                     type="button"
-                    className={`label-filter-button ${
-                        selectedLabelId === "all" ? "active" : ""
-                    }`}
+                    className={`label-filter-button ${selectedLabelId === "all" ? "active" : ""
+                        }`}
                     onClick={() => setSelectedLabelId("all")}
                 >
                     Tất cả
@@ -292,9 +290,8 @@ function ConversationList({
                     <button
                         type="button"
                         key={label.id}
-                        className={`label-filter-button ${
-                            selectedLabelId === label.id ? "active" : ""
-                        }`}
+                        className={`label-filter-button ${selectedLabelId === label.id ? "active" : ""
+                            }`}
                         style={{
                             "--label-color": label.color,
                         }}
@@ -343,9 +340,8 @@ function ConversationList({
                                         }
                                     }}
                                 >
-                                    <div className={`conversation-avatar ${
-                                        Number(item.type) === 1 ? "group-avatar" : ""
-                                    }`}>
+                                    <div className={`conversation-avatar ${Number(item.type) === 1 ? "group-avatar" : ""
+                                        }`}>
                                         {Number(item.type) === 1 ? (
                                             <Users size={23} />
                                         ) : (
@@ -372,158 +368,155 @@ function ConversationList({
                         )}
                     </>
                 ) : (
-                filteredConversations.length > 0 ? (
-                    filteredConversations.map((conversation) => {
-                        const assignedLabel = labels.find(
-                            (label) => label.id === conversation.labelId
-                        );
+                    filteredConversations.length > 0 ? (
+                        filteredConversations.map((conversation) => {
+                            const assignedLabel = labels.find(
+                                (label) => label.id === conversation.labelId
+                            );
 
-                        return (
-                            <div
-                                key={conversation.id}
-                                className="conversation-item-wrapper"
-                            >
-                                <button
-                                    type="button"
-                                    className={`conversation-item ${
-                                        activeId === conversation.id
-                                            ? "selected"
-                                            : ""
-                                    }`}
-                                    onClick={() => onSelect(conversation.id)}
+                            return (
+                                <div
+                                    key={conversation.id}
+                                    className="conversation-item-wrapper"
                                 >
-                                    <div
-                                        className={`conversation-avatar ${
-                                            Number(conversation.type) === 1 ? "group-avatar" : ""
-                                        }`}
+                                    <button
+                                        type="button"
+                                        className={`conversation-item ${activeId === conversation.id
+                                                ? "selected"
+                                                : ""
+                                            }`}
+                                        onClick={() => onSelect(conversation.id)}
                                     >
-                                        {Number(conversation.type) === 1 ? (
-                                            <Users size={23} />
-                                        ) : (
-                                            <img
-                                                src={conversation.avatar}
-                                                alt={conversation.name}
-                                            />
-                                        )}
-
-                                        {Number(conversation.type) === 0 &&
-                                            conversation.status === "online" && (
-                                                <span className="online-indicator"></span>
+                                        <div
+                                            className={`conversation-avatar ${Number(conversation.type) === 1 ? "group-avatar" : ""
+                                                }`}
+                                        >
+                                            {Number(conversation.type) === 1 ? (
+                                                <Users size={23} />
+                                            ) : (
+                                                <img
+                                                    src={conversation.avatar}
+                                                    alt={conversation.customName || conversation.name}
+                                                />
                                             )}
-                                    </div>
 
-                                    <div className="conversation-info">
-                                        <div className="conversation-top">
-                                            <div className="conversation-name-wrapper">
-                                                <h4>{conversation.name}</h4>
+                                            {Number(conversation.type) === 0 &&
+                                                conversation.status === "online" && (
+                                                    <span className="online-indicator"></span>
+                                                )}
+                                        </div>
 
-                                                {Number(conversation.type) === 1 && (
-                                                    <span className="group-chat-badge">
-                                                        <Users size={12} />
-                                                        Group
+                                        <div className="conversation-info">
+                                            <div className="conversation-top">
+                                                <div className="conversation-name-wrapper">
+                                                    <h4>{conversation.customName || conversation.name}</h4>
+
+                                                    {Number(conversation.type) === 1 && (
+                                                        <span className="group-chat-badge">
+                                                            <Users size={12} />
+                                                            Group
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <span className="conversation-time">
+                                                    {conversation.time}
+                                                </span>
+                                            </div>
+
+                                            <div className="conversation-bottom">
+                                                <p>{conversation.lastMessage}</p>
+
+                                                {conversation.unread > 0 && (
+                                                    <span className="unread-badge">
+                                                        {conversation.unread}
                                                     </span>
                                                 )}
                                             </div>
-                                            <span className="conversation-time">
-                                                {conversation.time}
-                                            </span>
-                                        </div>
 
-                                        <div className="conversation-bottom">
-                                            <p>{conversation.lastMessage}</p>
-
-                                            {conversation.unread > 0 && (
-                                                <span className="unread-badge">
-                                                    {conversation.unread}
+                                            {assignedLabel && (
+                                                <span
+                                                    className="conversation-label-badge"
+                                                    style={{
+                                                        "--label-color": assignedLabel.color,
+                                                    }}
+                                                >
+                                                    <span className="conversation-label-dot"></span>
+                                                    {assignedLabel.name}
                                                 </span>
                                             )}
                                         </div>
+                                    </button>
 
-                                        {assignedLabel && (
-                                            <span
-                                                className="conversation-label-badge"
-                                                style={{
-                                                    "--label-color": assignedLabel.color,
-                                                }}
-                                            >
-                                                <span className="conversation-label-dot"></span>
-                                                {assignedLabel.name}
-                                            </span>
-                                        )}
-                                    </div>
-                                </button>
+                                    <button
+                                        type="button"
+                                        className="conversation-label-action"
+                                        title="Gán nhãn"
+                                        onClick={() =>
+                                            setOpenLabelConversationId((prev) =>
+                                                prev === conversation.id
+                                                    ? null
+                                                    : conversation.id
+                                            )
+                                        }
+                                    >
+                                        <Tag size={16} />
+                                    </button>
 
-                                <button
-                                    type="button"
-                                    className="conversation-label-action"
-                                    title="Gán nhãn"
-                                    onClick={() =>
-                                        setOpenLabelConversationId((prev) =>
-                                            prev === conversation.id
-                                                ? null
-                                                : conversation.id
-                                        )
-                                    }
-                                >
-                                    <Tag size={16} />
-                                </button>
+                                    {openLabelConversationId === conversation.id && (
+                                        <div className="conversation-label-menu">
+                                            <div className="conversation-label-menu-title">
+                                                Chọn nhãn
+                                            </div>
 
-                                {openLabelConversationId === conversation.id && (
-                                    <div className="conversation-label-menu">
-                                        <div className="conversation-label-menu-title">
-                                            Chọn nhãn
-                                        </div>
-
-                                        <button
-                                            type="button"
-                                            className="conversation-label-option"
-                                            onClick={() => {
-                                                onAssignLabel(conversation.id, null);
-                                                setOpenLabelConversationId(null);
-                                            }}
-                                        >
-                                            Không có nhãn
-                                        </button>
-
-                                        {labels.map((label) => (
                                             <button
                                                 type="button"
-                                                key={label.id}
-                                                className={`conversation-label-option ${
-                                                    conversation.labelId === label.id
-                                                        ? "selected"
-                                                        : ""
-                                                }`}
+                                                className="conversation-label-option"
                                                 onClick={() => {
-                                                    onAssignLabel(
-                                                        conversation.id,
-                                                        label.id
-                                                    );
+                                                    onAssignLabel(conversation.id, null);
                                                     setOpenLabelConversationId(null);
                                                 }}
                                             >
-                                                <span
-                                                    className="conversation-label-dot"
-                                                    style={{
-                                                        "--label-color": label.color,
-                                                    }}
-                                                ></span>
-
-                                                {label.name}
+                                                Không có nhãn
                                             </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })
-                ) : (
-                    <div className="empty-conversation">
-                        No conversations found
-                    </div>
-                )
+
+                                            {labels.map((label) => (
+                                                <button
+                                                    type="button"
+                                                    key={label.id}
+                                                    className={`conversation-label-option ${conversation.labelId === label.id
+                                                            ? "selected"
+                                                            : ""
+                                                        }`}
+                                                    onClick={() => {
+                                                        onAssignLabel(
+                                                            conversation.id,
+                                                            label.id
+                                                        );
+                                                        setOpenLabelConversationId(null);
+                                                    }}
+                                                >
+                                                    <span
+                                                        className="conversation-label-dot"
+                                                        style={{
+                                                            "--label-color": label.color,
+                                                        }}
+                                                    ></span>
+
+                                                    {label.name}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })
+                    ) : (
+                        <div className="empty-conversation">
+                            No conversations found
+                        </div>
+                    )
                 )}
-            </div>    
+            </div>
 
             <div className="conversation-footer">
                 <span>{conversations.length} conversations</span>
