@@ -86,11 +86,6 @@ export const logout = async () => {
     return true;
 };
 
-export const forgotPassword = async () => {
-    await delay(900);
-    return true;
-};
-
 const updateUser = (id, patch) => {
     const users = getUsers().map((u) => (u.id === id ? { ...u, ...patch } : u));
     write(USERS_KEY, users);
