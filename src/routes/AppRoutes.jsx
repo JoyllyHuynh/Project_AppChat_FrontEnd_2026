@@ -1,4 +1,3 @@
-
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import MainLayout from "../components/layout/MainLayout";
@@ -9,9 +8,9 @@ import PublicRoute from "../features/auth/components/PublicRoute";
 import FriendList from "../features/user/components/FriendList";
 import LoginPage from "../features/auth/pages/LoginPage";
 import RegisterPage from "../features/auth/pages/RegisterPage";
-import ForgotPasswordPage from "../features/auth/pages/ForgotPasswordPage";
 import NotificationsPage from "../features/notifications/pages/NotificationsPage";
 import ProfilePage from "../features/profile/pages/ProfilePage";
+import SettingsPage from "../features/settings/pages/SettingsPage";
 
 function AppRoutes() {
     return (
@@ -21,7 +20,6 @@ function AppRoutes() {
             <Route element={<PublicRoute />}>
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
-                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             </Route>
 
             <Route element={<ProtectedRoute />}>
@@ -29,6 +27,7 @@ function AppRoutes() {
                 <Route element={<SidebarLayout />}>
                     <Route path="/notifications" element={<NotificationsPage />} />
                     <Route path="/profile" element={<ProfilePage />} />
+                    <Route path="/settings" element={<SettingsPage />} />
                 </Route>
 
                 <Route path="/friends" element={<FriendPage />}>

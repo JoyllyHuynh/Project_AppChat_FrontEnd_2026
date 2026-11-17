@@ -13,7 +13,6 @@ const asThunk = (type, fn) =>
 export const login = asThunk('auth/login', (data) => authService.login(data));
 export const register = asThunk('auth/register', (data) => authService.register(data));
 export const logout = asThunk('auth/logout', () => authService.logout());
-export const forgotPassword = asThunk('auth/forgotPassword', (data) => authService.forgotPassword(data));
 export const restoreSession = asThunk('auth/restoreSession', () => authService.restoreSession());
 export const updateProfile = asThunk('auth/updateProfile', (patch, user) => authService.updateProfile(user.id, patch));
 export const setUserStatus = asThunk('auth/setUserStatus', (status, user) => authService.setStatus(user.id, status));
@@ -38,7 +37,7 @@ const authSlice = createSlice({
         },
     },
     extraReducers: (builder) => {
-        [login, register, logout, forgotPassword].forEach((thunk) => {
+        [login, register, logout].forEach((thunk) => {
             builder
                 .addCase(thunk.pending, (s) => {
                     s.loading = true;
@@ -72,9 +71,6 @@ const authSlice = createSlice({
             .addCase(logout.fulfilled, (s) => {
                 s.loading = false;
                 s.user = null;
-            })
-            .addCase(forgotPassword.fulfilled, (s) => {
-                s.loading = false;
             })
             .addCase(restoreSession.fulfilled, (s, a) => {
                 s.user = a.payload;

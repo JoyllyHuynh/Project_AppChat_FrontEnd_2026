@@ -55,7 +55,6 @@ export default function LoginPage() {
                     <label className="auth-check">
                         <input type="checkbox" name="remember" checked={form.remember} onChange={handleChange} /> Keep me logged in
                     </label>
-                    <Link className="auth-link" to="/forgot-password">Forgot password?</Link>
                 </div>
                 <button className="btn btn-primary btn-block" disabled={loading}>
                     <LogIn size={18} /> {loading ? 'Logging in…' : 'Log in'}

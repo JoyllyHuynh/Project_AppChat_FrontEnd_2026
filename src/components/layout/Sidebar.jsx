@@ -11,7 +11,7 @@ import {
     Moon,
 } from "lucide-react";
 
-import {useDispatch, useSelector} from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
 import { logout } from "../../store/authSlice";
 import Avatar from "../common/Avatar";
@@ -30,7 +30,7 @@ function Sidebar({ theme, onToggleTheme }) {
     const isFriendsPage = location.pathname.startsWith("/friends");
     const isNotificationsPage = location.pathname.startsWith("/notifications");
     const isProfilePage = location.pathname.startsWith("/profile");
-
+    const isSettingsPage = location.pathname.startsWith("/settings");
     useEffect(() => {
         if (notificationStatus === "idle") {
             dispatch(fetchNotifications());
@@ -104,7 +104,12 @@ function Sidebar({ theme, onToggleTheme }) {
                     )}
                 </button>
 
-                <button className="nav-item" title="Settings">
+                <button
+                    className={`nav-item ${isSettingsPage ? "active" : ""}`}
+                    title="Settings"
+                    aria-label="Settings"
+                    onClick={() => navigate("/settings")}
+                >
                     <Settings size={22} />
                 </button>
 
