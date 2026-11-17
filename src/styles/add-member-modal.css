@@ -1,0 +1,168 @@
+.add-member-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.add-member-container {
+    background: #ffffff;
+    width: 420px;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.add-member-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.add-member-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.add-member-close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+.add-member-close-btn:hover {
+    background-color: #f3f4f6;
+    color: #111827;
+}
+
+.add-member-search-box {
+    display: flex;
+    align-items: center;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 6px 10px;
+    gap: 8px;
+    background-color: #f9fafb;
+}
+
+.add-member-search-input {
+    border: none;
+    outline: none;
+    width: 100%;
+    font-size: 14px;
+    background: transparent;
+    color: #111827;
+}
+
+.add-member-list {
+    max-height: 240px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.add-member-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.add-member-item:hover {
+    background-color: #f3f4f6;
+}
+
+.add-member-item.selected {
+    background-color: #eff6ff;
+}
+
+.add-member-user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.add-member-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.add-member-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #111827;
+}
+
+.add-member-checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.add-member-status-text {
+    text-align: center;
+    color: #6b7280;
+    fontSize: 13px;
+    padding: 12px 0;
+}
+
+.add-member-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.add-member-cancel-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    background: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.add-member-cancel-btn:hover {
+    background-color: #f3f4f6;
+}
+
+.add-member-submit-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    background: #0068ff;
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.add-member-submit-btn:disabled {
+    background: #93c5fd;
+    cursor: not-allowed;
+}
