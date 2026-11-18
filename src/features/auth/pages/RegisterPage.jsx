@@ -7,12 +7,15 @@ import FormField from '../../../components/common/FormField';
 import Alert from '../../../components/common/Alert';
 import { clearAuthFeedback, register } from '../../../store/authSlice';
 import { validateRegister } from '../../../utils/validators';
+import useUsernameAvailability from "../hooks/useUsernameAvailbility.js";
 
+const TAKEN_MESSAGE = 'This username is already taken.';
 export default function RegisterPage() {
     const dispatch = useDispatch();
     const { loading, error } = useSelector((s) => s.auth);
     const [form, setForm] = useState({ username: '', password: '', confirmPassword: '', agree: false });
     const [errors, setErrors] = useState({});
+    const availability = useUsernameAvailability(form.username);
 
     useEffect(() => {
         dispatch(clearAuthFeedback());
@@ -27,6 +30,7 @@ export default function RegisterPage() {
     const handleSubmit = (e) => {
         e.preventDefault();
         const v = validateRegister(form);
+        if (!v.username && availability === 'taken') v.username = TAKEN_MESSAGE;
         setErrors(v);
         if (Object.keys(v).length === 0) dispatch(register({ ...form, username: form.username.trim() }));
     };
@@ -43,7 +47,18 @@ export default function RegisterPage() {
         >
             <form className="auth-form" onSubmit={handleSubmit} noValidate>
                 <Alert>{error}</Alert>
-                <FormField label="Username" icon={User} name="username" autoComplete="username" placeholder="Letters, numbers and underscores" value={form.username} onChange={handleChange} error={errors.username} />
+                <FormField
+                    label="Username"
+                    icon={User}
+                    name="username"
+                    autoComplete="username"
+                    placeholder="Letters, numbers and underscores"
+                    value={form.username}
+                    onChange={handleChange}
+                    error={errors.username || (availability === 'taken' ? TAKEN_MESSAGE : undefined)}
+                    success={availability === 'available' ? 'Username is available.' : undefined}
+                    hint={availability === 'checking' ? 'Checking availability…' : undefined}
+                />
                 <FormField label="Password" icon={Lock} name="password" type="password" autoComplete="new-password" placeholder="At least 6 characters" value={form.password} onChange={handleChange} error={errors.password} />
                 <FormField label="Confirm password" icon={Lock} name="confirmPassword" type="password" autoComplete="new-password" placeholder="Re-enter your password" value={form.confirmPassword} onChange={handleChange} error={errors.confirmPassword} />
                 <div>

@@ -6,6 +6,7 @@ import useFlashMessage from "../../../hooks/useFlashMessage";
 import useSettings from "../hooks/useSettings";
 import { SETTING_GROUPS } from "../settingsConfig";
 import { logout } from "../../../store/authSlice";
+import BrowserPermissionNotice from "../../notifications/components/BrowserPermissionNotice";
 
 function SettingsPage() {
     const dispatch = useDispatch();
@@ -55,6 +56,10 @@ function SettingsPage() {
                                 />
                             </div>
                         ))}
+
+                        {group.title === "Notifications" && (
+                            <BrowserPermissionNotice enabled={settings.desktopNotifications} />
+                        )}
                     </section>
                 ))}
 
