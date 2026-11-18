@@ -106,3 +106,8 @@ export const changePassword = async (id, { currentPassword, newPassword }) => {
     updateUser(id, { password: newPassword });
     return true;
 };
+
+export const checkUsernameAvailable = async (username) => {
+    await delay(300);
+    return !getUsers().some((u) => sameName(u.username, username));
+};

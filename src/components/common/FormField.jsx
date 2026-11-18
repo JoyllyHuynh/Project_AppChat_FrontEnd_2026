@@ -1,7 +1,7 @@
 import { useId, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 
-export default function FormField({ label, icon: Icon, type = 'text', multiline = false, error, hint, ...props }) {
+export default function FormField({ label, icon: Icon, type = 'text', multiline = false, error, hint, success, ...props }) {
     const id = useId();
     const [visible, setVisible] = useState(false);
     const isPassword = type === 'password';
@@ -23,7 +23,13 @@ export default function FormField({ label, icon: Icon, type = 'text', multiline 
                     </button>
                 )}
             </div>
-            {error ? <span className="field-error">{error}</span> : hint && <span className="field-hint">{hint}</span>}
+            {error ? (
+                <span className="field-error">{error}</span>
+            ) : success ? (
+                <span className="field-success">{success}</span>
+            ) : (
+                hint && <span className="field-hint">{hint}</span>
+            )}
         </div>
     );
 }

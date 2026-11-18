@@ -274,3 +274,8 @@ button {
 .avatar-status.offline, .status-dot.offline {
     background: var(--color-text-muted);
 }
+
+.field-success { font-size: 12px;
+    font-weight: 500;
+    color: color-mix(in srgb, var(--color-online) 70%, var(--color-text));
+}

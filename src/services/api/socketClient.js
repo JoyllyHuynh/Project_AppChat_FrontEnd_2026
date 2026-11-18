@@ -11,6 +11,8 @@ let session = null;
 const hooks = { onSessionCode: null, onSessionExpired: null };
 const pending = new Map();
 const listeners = new Map();
+let requestSeq = 0;
+const NO_AUTH_EVENTS = ["REGISTER", "LOGIN", "RE_LOGIN"];
 
 const isOpen = () => socket && socket.readyState === WebSocket.OPEN;
 const buildPacket = (event, data) => ({ action: 'onchat', data: data === undefined ? { event } : { event, data } });
@@ -37,65 +39,53 @@ function failAllPending(error) {
     pending.clear();
 }
 
+function rejectOldestAuthRequest(mes) {
+    let oldest = null;
+    pending.forEach((queue, event) => {
+        if (NO_AUTH_EVENTS.includes(event)) return;
+        queue.forEach((entry) => {
+            if (!oldest || entry.seq < oldest.entry.seq) oldest = { event, entry };
+        });
+    });
+    if (!oldest) return false;
+
+    removePending(oldest.event, oldest.entry);
+    clearTimeout(oldest.entry.timer);
+    const error = new Error(mes || "User not Login");
+    error.server = true;
+    error.authRequired = true;
+    oldest.entry.reject(error);
+    return true;
+}
+
 function handleMessage(message) {
     let packet;
-
     try {
         packet = JSON.parse(message.data);
-    } catch (error) {
-        console.error("[WebSocket] Invalid message:", error);
+    } catch {
+        return;
+    }
+    if (packet.event === "AUTH" && packet.status === "error") {
+        rejectOldestAuthRequest(packet.mes);
+        listeners.get("AUTH")?.forEach((fn) => fn(packet));
         return;
     }
 
-    console.log("[WebSocket] Received event:", packet.event);
-
-    if (packet.event === "GET_ROOM_CHAT_MES") {
-        console.log(
-            "[GET_ROOM_CHAT_MES] Full server packet:",
-            JSON.stringify(packet, null, 2)
-        );
-    }
-
     const waiting = pending.get(packet.event);
-    let responseIndex = 0;
-
-    if (packet.event === "SEND_CHAT" && packet.data?.name) {
-        responseIndex = waiting?.findIndex(
-            (entry) =>
-                packet.data.name === session?.user &&
-                packet.data.to === entry.data?.to &&
-                packet.data.mes === entry.data?.mes
-        ) ?? -1;
-    }
-
-    if (waiting && responseIndex !== -1 && waiting.length > 0) {
-        const [entry] = waiting.splice(responseIndex, 1);
-
+    if (waiting && waiting.length > 0) {
+        const entry = waiting.shift();
         clearTimeout(entry.timer);
-
-        if (packet.status === "success") {
+        if (packet.status === 'success') {
             entry.resolve(packet.data);
         } else {
-            const error = new Error(
-                packet.mes || "Request failed."
-            );
-
+            const error = new Error(packet.mes || 'Request failed.');
             error.server = true;
             entry.reject(error);
         }
+        return;
     }
-    listeners.get(packet.event)?.forEach((fn) => {
-        try {
-            fn(packet);
-        } catch (error) {
-            console.error(
-                `[WebSocket] Listener ${packet.event} failed:`,
-                error
-            );
-        }
-    });
+    listeners.get(packet.event)?.forEach((fn) => fn(packet));
 }
-
 
 export function connect() {
     if (isOpen()) return Promise.resolve();
@@ -136,7 +126,7 @@ export function disconnect() {
 export async function request(event, data) {
     await connect();
     return new Promise((resolve, reject) => {
-        const entry = { resolve, reject, timer: null, data };
+        const entry = { resolve, reject, timer: null, seq: (requestSeq += 1) };
         entry.timer = setTimeout(() => {
             removePending(event, entry);
             reject(new Error('The server did not respond. Try again.'));
