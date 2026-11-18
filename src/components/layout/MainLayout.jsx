@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import Sidebar from "./Sidebar";
 import ConversationList from "../../features/chat/components/ConversationList";
 import ChatWindow from "../../features/chat/components/ChatWindow";
-import {getReplyDelay,createIncomingMessage,generateAutoReply,generateIncomingContent} from "../../features/chat/services/chatMockService";
-import {currentUser,conversations as initialConversations,initialMessages,} from "../../services/mock/chatData";
-import {getConversationLabelData, saveConversationLabelData, generateLabelId,} from "../../features/chat/services/conversationLabelService";
+import { getReplyDelay, createIncomingMessage, generateAutoReply, generateIncomingContent } from "../../features/chat/services/chatMockService";
+import { currentUser, conversations as initialConversations, initialMessages, } from "../../services/mock/chatData";
+import { getConversationLabelData, saveConversationLabelData, generateLabelId, } from "../../features/chat/services/conversationLabelService";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUsers } from "../../features/user/userSlice";
-import { fetchChatMessages, fetchRoomChatMessages, sendChatMessage,sendRoomMessage,receiveChatMessage,receiveRoomChatMessage, } from "../../features/chat/chatSlice";
+import { fetchChatMessages, fetchRoomChatMessages, sendChatMessage, sendRoomMessage, receiveChatMessage, receiveRoomChatMessage, } from "../../features/chat/chatSlice";
 import { on } from "../../services/api/socketClient";
 import useTheme from "../../hooks/useTheme";
 import { joinRoom } from "../../features/chat/services/chatSocketService";
@@ -190,7 +190,7 @@ function MainLayout() {
                     (conversation) =>
                         Number(conversation.type) === 0 &&
                         conversation.name?.toLowerCase() ===
-                            trimmedName.toLowerCase()
+                        trimmedName.toLowerCase()
                 );
 
                 if (alreadyExists) return prev;
@@ -223,8 +223,8 @@ function MainLayout() {
         const existingRoom = conversations.find(
             (conversation) =>
                 Number(conversation.type) === 1 &&
-                conversation.name?.trim().toLowerCase() ===
-                    trimmedName.toLowerCase()
+                (conversation.customName || conversation.name)?.trim().toLowerCase() ===
+                trimmedName.toLowerCase()
         );
 
         if (existingRoom) {
@@ -255,7 +255,7 @@ function MainLayout() {
                     (conversation) =>
                         Number(conversation.type) === 1 &&
                         conversation.name?.toLowerCase() ===
-                            roomName.toLowerCase()
+                        roomName.toLowerCase()
                 );
 
                 if (alreadyExists) return prev;
@@ -290,7 +290,7 @@ function MainLayout() {
         setActiveId(null);
     };
 
-    
+
     const handleSendMessage = async (content) => {
         const trimmedContent = content.trim();
 
@@ -356,7 +356,16 @@ function MainLayout() {
             );
         }
     };
-
+    /* handel xư lý đổi tên cuộc trò chuyện */
+    const handleUpdateConversationName = (roomId, newName) => {
+        setConversations((prev) =>
+            prev.map((conv) =>
+                String(conv.id) === String(roomId)
+                    ? { ...conv, customName: newName }
+                    : conv
+            )
+        );
+    };
     const handleAutoReply = (conversationId, userMessage) => {
         const conversation = conversations.find(
             (item) => item.id === conversationId
@@ -552,7 +561,7 @@ function MainLayout() {
     };
 
     const {
-        users,  
+        users,
         usersLoading,
         error,
     } = useSelector((state) => state.user);
@@ -662,6 +671,7 @@ function MainLayout() {
 
                     id: user.id,
                     name: user.name,
+                    customName: existingConversation?.customName || null,
                     type: user.type,
                     actionTime: user.actionTime,
 
@@ -691,7 +701,7 @@ function MainLayout() {
         });
     }, [users, usersLoading, labelAssignments]);
 
-    
+
     useEffect(() => {
         const unsubscribe = on("SEND_CHAT", (packet) => {
             console.log("[REALTIME] SEND_CHAT received:", packet);
@@ -833,7 +843,7 @@ function MainLayout() {
         <div className={`app-container ${activeId ? "mobile-chat-open" : ""}`}>
 
             <Sidebar theme={theme} onToggleTheme={toggleTheme} />
-            
+
             <ConversationList
                 conversations={conversations}
                 groupConversations={groupConversations}
@@ -848,9 +858,10 @@ function MainLayout() {
                 onUpdateLabel={handleUpdateLabel}
                 onDeleteLabel={handleDeleteLabel}
                 onAssignLabel={handleAssignLabel}
+                onUpdateConversationName={handleUpdateConversationName}
             />
 
-            
+
             <ChatWindow
                 conversation={activeConversation}
                 messages={activeMessages}
@@ -863,6 +874,7 @@ function MainLayout() {
                 onSimulateIncoming={handleSimulateIncoming}
                 conversations={conversations}
                 onBack={handleBackToConversationList}
+                onUpdateConversationName={handleUpdateConversationName}
             />
 
         </div>
