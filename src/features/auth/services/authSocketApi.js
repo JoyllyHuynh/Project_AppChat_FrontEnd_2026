@@ -72,16 +72,16 @@ export const logout = async () => {
     return true;
 };
 
+
 export const restoreSession = async () => {
     const username = tokenStorage.getUser()?.username;
     const code = tokenStorage.getToken();
-    if (!username || !code) return null;
-    setSession({ user: username, code });
-    try {
-        await reLogin();
-    } catch (err) {
-        if (err.server) throw err;
+
+    if (!username || !code) {
+        return null;
     }
+    setSession({ user: username, code });
+    await reLogin();
     return buildUser(username);
 };
 
