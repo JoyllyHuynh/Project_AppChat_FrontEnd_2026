@@ -7,27 +7,23 @@ import { request, send } from "../../../services/api/socketClient";
  * @param {number} page
  */
 export const getPeopleChatMessages = async (name, page = 1) => {
-    try {
-        if (!name) {
-            throw new Error("Tên người dùng không được để trống.");
-        }
+    if (!name?.trim()) {
+        throw new Error("Tên người dùng không được để trống.");
+    }
 
+    try {
         const data = await request("GET_PEOPLE_CHAT_MES", {
-            name,
+            name: name.trim(),
             page,
         });
 
         if (!Array.isArray(data)) {
-            throw new Error("Dữ liệu lịch sử tin nhắn không hợp lệ.");
+            throw new Error("Dữ liệu lịch sử chat cá nhân không hợp lệ.");
         }
 
         return data;
     } catch (error) {
-        console.error(
-            "[Chat API] GET_PEOPLE_CHAT_MES failed:",
-            error
-        );
-
+        console.error("[Chat API] GET_PEOPLE_CHAT_MES failed:", error);
         throw error;
     }
 };
@@ -69,34 +65,34 @@ export const sendPeopleChatMessage = async (to, mes) => {
  * @param {number} page
  */
 export const getRoomChatMessages = async (name, page = 1) => {
-    try {
-        if (!name) {
-            throw new Error("Room name cannot be empty.");
-        }
+    if (!name?.trim()) {
+        throw new Error("Tên phòng không được để trống.");
+    }
 
+    try {
         const data = await request("GET_ROOM_CHAT_MES", {
-            name,
+            name: name.trim(),
             page,
         });
 
-        console.log("[GET_ROOM_CHAT_MES] Room response:", data);
-        console.log("[GET_ROOM_CHAT_MES] Chat data:", data?.chatData);
-
-        if (!data || !Array.isArray(data.chatData)) {
-            throw new Error("Invalid room message history.");
+        if (!data) {
+            throw new Error("Dữ liệu lịch sử chat nhóm không hợp lệ.");
         }
 
-        return data.chatData;
-    } catch (error) {
-        console.error(
-            "[Chat API] GET_ROOM_CHAT_MES failed:",
-            error
-        );
+        console.log("[GET_ROOM_CHAT_MES] Response:", data);
 
+        const messages = data.chatData ?? data.chatMess;
+
+        if (!Array.isArray(messages)) {
+            throw new Error("Không tìm thấy danh sách tin nhắn nhóm.");
+        }
+
+        return messages;
+    } catch (error) {
+        console.error("[Chat API] GET_ROOM_CHAT_MES failed:", error);
         throw error;
     }
 };
-
 
 /**
  * @param {string} to

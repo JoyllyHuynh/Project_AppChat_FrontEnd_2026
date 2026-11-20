@@ -701,7 +701,6 @@ function MainLayout() {
         });
     }, [users, usersLoading, labelAssignments]);
 
-
     useEffect(() => {
         const unsubscribe = on("SEND_CHAT", (packet) => {
             console.log("[REALTIME] SEND_CHAT received:", packet);
