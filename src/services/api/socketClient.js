@@ -123,10 +123,14 @@ function handleMessage(message) {
         return;
     }
 
-    const requestEvent =
+    const mappedRequestEvent =
         Object.keys(RESPONSE_EVENT_MAP).find(
             (event) => RESPONSE_EVENT_MAP[event] === packet.event
-        ) || packet.event;
+        );
+
+    const requestEvent = pending.has(packet.event)
+        ? packet.event
+        : mappedRequestEvent || packet.event;
 
     const waiting = pending.get(requestEvent);
 

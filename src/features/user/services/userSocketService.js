@@ -30,6 +30,23 @@ export const getUserList = async () => {
     }
 };
 
+export const checkUserOnline = async (username) => {
+    try {
+        console.log(`[ONLINE REQUEST] Checking: ${username}`);
+
+        const data = await request("CHECK_USER_ONLINE", {
+            user: username,
+        });
+
+        console.log(`[ONLINE RESPONSE] ${username}:`, data.status);
+
+        return data.status;
+    } catch (error) {
+        console.error(`[ONLINE ERROR] ${username}:`, error);
+        throw error;
+    }
+};
+
 export const getFriendRequests = async () => {
     try {
         const data = await request("GET_FRIEND_REQUESTS", {});
