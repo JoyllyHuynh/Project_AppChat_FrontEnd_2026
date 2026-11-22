@@ -2,7 +2,6 @@ import { clearSession, configure, disconnect, reLogin, request, setSession } fro
 import { tokenStorage } from '../../../services/api/tokenStorage';
 
 const PROFILE_KEY = (username) => `webchat.profile.${username}`;
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const readProfile = (username) => {
     try {
@@ -73,22 +72,17 @@ export const logout = async () => {
     return true;
 };
 
+
 export const restoreSession = async () => {
     const username = tokenStorage.getUser()?.username;
     const code = tokenStorage.getToken();
-    if (!username || !code) return null;
-    setSession({ user: username, code });
-    try {
-        await reLogin();
-    } catch (err) {
-        if (err.server) throw err;
-    }
-    return buildUser(username);
-};
 
-export const forgotPassword = async () => {
-    await delay(900);
-    return true;
+    if (!username || !code) {
+        return null;
+    }
+    setSession({ user: username, code });
+    await reLogin();
+    return buildUser(username);
 };
 
 export const updateProfile = async (_id, patch) => {

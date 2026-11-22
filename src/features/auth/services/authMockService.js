@@ -86,11 +86,6 @@ export const logout = async () => {
     return true;
 };
 
-export const forgotPassword = async () => {
-    await delay(900);
-    return true;
-};
-
 const updateUser = (id, patch) => {
     const users = getUsers().map((u) => (u.id === id ? { ...u, ...patch } : u));
     write(USERS_KEY, users);
@@ -110,4 +105,9 @@ export const changePassword = async (id, { currentPassword, newPassword }) => {
     if (!user || user.password !== currentPassword) throw new Error('Current password is incorrect.');
     updateUser(id, { password: newPassword });
     return true;
+};
+
+export const checkUsernameAvailable = async (username) => {
+    await delay(300);
+    return !getUsers().some((u) => sameName(u.username, username));
 };

@@ -140,12 +140,6 @@
     text-decoration: underline;
 }
 
-.auth-back {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
 .auth-footer {
     margin: 22px 0 0;
     text-align: center;

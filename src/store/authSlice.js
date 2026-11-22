@@ -13,14 +13,15 @@ const asThunk = (type, fn) =>
 export const login = asThunk('auth/login', (data) => authService.login(data));
 export const register = asThunk('auth/register', (data) => authService.register(data));
 export const logout = asThunk('auth/logout', () => authService.logout());
-export const forgotPassword = asThunk('auth/forgotPassword', (data) => authService.forgotPassword(data));
 export const restoreSession = asThunk('auth/restoreSession', () => authService.restoreSession());
 export const updateProfile = asThunk('auth/updateProfile', (patch, user) => authService.updateProfile(user.id, patch));
 export const setUserStatus = asThunk('auth/setUserStatus', (status, user) => authService.setStatus(user.id, status));
 export const changePassword = asThunk('auth/changePassword', (data, user) => authService.changePassword(user.id, data));
 
+const initialUser = authService.getSession();
 const initialState = {
-    user: authService.getSession(),
+    user: initialUser,
+    initializing: Boolean(initialUser),
     loading: false,
     saving: false,
     error: null,
@@ -38,7 +39,7 @@ const authSlice = createSlice({
         },
     },
     extraReducers: (builder) => {
-        [login, register, logout, forgotPassword].forEach((thunk) => {
+        [login, register, logout].forEach((thunk) => {
             builder
                 .addCase(thunk.pending, (s) => {
                     s.loading = true;
@@ -73,14 +74,18 @@ const authSlice = createSlice({
                 s.loading = false;
                 s.user = null;
             })
-            .addCase(forgotPassword.fulfilled, (s) => {
-                s.loading = false;
+            .addCase(restoreSession.pending, (s) => {
+                s.initializing = true;
+                s.error = null;
             })
             .addCase(restoreSession.fulfilled, (s, a) => {
+                s.initializing = false;
                 s.user = a.payload;
             })
-            .addCase(restoreSession.rejected, (s) => {
+            .addCase(restoreSession.rejected, (s, a) => {
+                s.initializing = false;
                 s.user = null;
+                s.error = a.payload;
             })
             .addCase(updateProfile.fulfilled, (s, a) => {
                 s.saving = false;
