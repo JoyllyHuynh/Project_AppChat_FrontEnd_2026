@@ -5,6 +5,7 @@ import { fetchUsers, setSelectedUserProfile } from '../userSlice';
 import { sendFriendRequest } from "../services/userSocketService";
 // import { request } from '../../../services/api/socketClient';
 import '../../../styles/friend-list.css';
+import { checkUserOnline } from "../services/userSocketService";
 
 export const FriendList = () => {
   console.log("[FRIEND LIST] Component rendered");
@@ -27,62 +28,76 @@ export const FriendList = () => {
     }
   }, [dispatch, rawUsers.length, usersLoading]);
 
-  // Kiểm tra trạng thái online bằng API CHAT_CHECK_USER_ONLINE cho từng user khi danh sách thay đổi
-  // useEffect(() => {
-  //   console.log("[ONLINE CHECK] useEffect triggered");
-  //   console.log("[ONLINE CHECK] rawUsers:", rawUsers);
-  //   let isMounted = true;
-
-  //   const checkOnlineStatuses = async () => {
-  //     console.log("[ONLINE CHECK] rawUsers:", rawUsers);
-  //     console.log("[ONLINE CHECK] users count:", rawUsers?.length);
-  //     if (!rawUsers || rawUsers.length === 0) {
-  //       setUsersWithStatus([]);
-  //       return;
-  //     }
-
-  //     const updated = await Promise.all(
-  //       rawUsers.map(async (user) => {
-  //         try {
-  //           const res = await request("CHAT_CHECK_USER_ONLINE", { user: user.name });
-  //           return {
-  //             ...user,
-  //             isOnline: res?.status ?? false,
-  //           };
-  //         } catch (err) {
-  //           return {
-  //             ...user,
-  //             isOnline: false,
-  //           };
-  //         }
-  //       })
-  //     );
-
-  //     if (isMounted) {
-  //       setUsersWithStatus(updated);
-  //     }
-  //   };
-
-  //   checkOnlineStatuses();
-
-  //   return () => {
-  //     isMounted = false;
-  //   };
-  // }, [rawUsers]);
 
   useEffect(() => {
-    if (!rawUsers || rawUsers.length === 0) {
-      setUsersWithStatus([]);
-      return;
-    }
+      let isMounted = true;
 
-    setUsersWithStatus(
-      rawUsers.map((user) => ({
-        ...user,
-        isOnline: null,
-      }))
-    );
+      const checkOnlineStatuses = async () => {
+          if (!rawUsers || rawUsers.length === 0) {
+              setUsersWithStatus([]);
+              return;
+          }
+
+          const normalUsers = rawUsers.filter(
+              (user) => Number(user.type) === 0
+          );
+
+          setUsersWithStatus(
+              normalUsers.map((user) => ({
+                  ...user,
+                  isOnline: null,
+              }))
+          );
+
+          for (const user of normalUsers) {
+              if (!isMounted) return;
+
+              try {
+                  console.log(
+                      `[ONLINE CHECK] Checking: ${user.name}`
+                  );
+
+                  const isOnline = await checkUserOnline(user.name);
+
+                  console.log(
+                      `[ONLINE RESULT] ${user.name}: ${isOnline}`
+                  );
+
+                  if (!isMounted) return;
+
+                  setUsersWithStatus((prev) =>
+                      prev.map((item) =>
+                          item.id === user.id
+                              ? { ...item, isOnline }
+                              : item
+                      )
+                  );
+              } catch (error) {
+                  console.error(
+                      `[ONLINE ERROR] ${user.name}:`,
+                      error
+                  );
+
+                  if (!isMounted) return;
+
+                  setUsersWithStatus((prev) =>
+                      prev.map((item) =>
+                          item.id === user.id
+                              ? { ...item, isOnline: null }
+                              : item
+                      )
+                  );
+              }
+          }
+      };
+
+      checkOnlineStatuses();
+
+      return () => {
+          isMounted = false;
+      };
   }, [rawUsers]);
+
 
   const displayList = useMemo(() => {
     const keyword = searchTerm.trim().toLowerCase();
