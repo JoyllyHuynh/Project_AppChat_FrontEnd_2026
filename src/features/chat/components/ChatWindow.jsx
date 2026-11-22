@@ -118,6 +118,7 @@ function getFileType(fileName) {
 
 function ChatWindow({
     conversation,
+    onlineStatus,
     messages,
     currentUser,
     onSendMessage,
@@ -678,9 +679,10 @@ function ChatWindow({
                                     <UserRound size={24} />
                                 )}
 
-                                {conversation.status === "online" && (
-                                    <span className="online-indicator"></span>
-                                )}
+                                {Number(conversation.type) === 0 &&
+                                    onlineStatus === "online" && (
+                                        <span className="online-indicator"></span>
+                                    )}
                             </div>
 
                             <div className="chat-user-details">
@@ -713,9 +715,17 @@ function ChatWindow({
                                     </button>
                                 </div>
 
-                                <p style={{ margin: 0 }}>
-                                    {conversation.status === "online" ? "Active now" : "Offline"}
-                                </p>
+                                {Number(conversation.type) === 0 && (
+                                    <p style={{ margin: 0 }}>
+                                        {onlineStatus === "online"
+                                            ? "Đang hoạt động"
+                                            : onlineStatus === "offline"
+                                                ? "Offline"
+                                                : onlineStatus === "checking"
+                                                    ? "Đang kiểm tra..."
+                                                    : "Chưa xác định"}
+                                    </p>
+                                )}
                             </div>
 
                             {isRenameModalOpen && (

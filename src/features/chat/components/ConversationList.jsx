@@ -16,6 +16,7 @@ const DEFAULT_LABEL_COLOR = "#3B82F6";
 
 function ConversationList({
     conversations,
+    onlineStatuses,
     activeId,
     onSelect,
     onSearchUser,
@@ -410,7 +411,7 @@ function ConversationList({
                                             )}
 
                                             {Number(conversation.type) === 0 &&
-                                                conversation.status === "online" && (
+                                                onlineStatuses?.[conversation.name?.trim()] === "online" && (
                                                     <span className="online-indicator"></span>
                                                 )}
                                         </div>
