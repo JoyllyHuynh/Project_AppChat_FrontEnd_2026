@@ -11,7 +11,6 @@ import { fetchChatMessages, fetchRoomChatMessages, sendChatMessage, sendRoomMess
 import { on } from "../../services/api/socketClient";
 import useTheme from "../../hooks/useTheme";
 import { joinRoom } from "../../features/chat/services/chatSocketService";
-import useConversationPresence from "../../features/presence/hooks/useConversationPresence";
 
 const parseMessageDate = (value) => {
     if (value == null) return null;
@@ -586,9 +585,6 @@ function MainLayout() {
         (item) => item.id === activeId
     );
 
-    const { conversationsWithStatus, activeConversationWithStatus } =
-        useConversationPresence(conversations, activeConversation);
-
     const personalConversations = conversations.filter(
         (conversation) => Number(conversation.type) === 0
     );
@@ -849,7 +845,7 @@ function MainLayout() {
             <Sidebar theme={theme} onToggleTheme={toggleTheme} />
 
             <ConversationList
-                conversations={conversationsWithStatus}
+                conversations={conversations}
                 groupConversations={groupConversations}
                 activeId={activeId}
                 onSelect={handleSelectConversation}
@@ -867,7 +863,7 @@ function MainLayout() {
 
 
             <ChatWindow
-                conversation={activeConversationWithStatus}
+                conversation={activeConversation}
                 messages={activeMessages}
                 currentUser={{
                     ...currentUser,
@@ -876,7 +872,7 @@ function MainLayout() {
                 }}
                 onSendMessage={handleSendMessage}
                 onSimulateIncoming={handleSimulateIncoming}
-                conversations={conversationsWithStatus}
+                conversations={conversations}
                 onBack={handleBackToConversationList}
                 onUpdateConversationName={handleUpdateConversationName}
             />

@@ -3,10 +3,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Search, X, Phone, MessageSquare, Edit2, UserPlus } from 'lucide-react';
 import { fetchUsers, setSelectedUserProfile } from '../userSlice';
 import { sendFriendRequest } from "../services/userSocketService";
-import { request } from '../../../services/api/socketClient';
+// import { request } from '../../../services/api/socketClient';
 import '../../../styles/friend-list.css';
+import { checkUserOnline } from "../services/userSocketService";
 
 export const FriendList = () => {
+  console.log("[FRIEND LIST] Component rendered");
   const dispatch = useDispatch();
 
   const {
@@ -26,44 +28,76 @@ export const FriendList = () => {
     }
   }, [dispatch, rawUsers.length, usersLoading]);
 
-  // Kiểm tra trạng thái online bằng API CHAT_CHECK_USER_ONLINE cho từng user khi danh sách thay đổi
+
   useEffect(() => {
-    let isMounted = true;
+      let isMounted = true;
 
-    const checkOnlineStatuses = async () => {
-      if (!rawUsers || rawUsers.length === 0) {
-        setUsersWithStatus([]);
-        return;
-      }
-
-      const updated = await Promise.all(
-        rawUsers.map(async (user) => {
-          try {
-            const res = await request("CHAT_CHECK_USER_ONLINE", { user: user.name });
-            return {
-              ...user,
-              isOnline: res?.status ?? false,
-            };
-          } catch (err) {
-            return {
-              ...user,
-              isOnline: false,
-            };
+      const checkOnlineStatuses = async () => {
+          if (!rawUsers || rawUsers.length === 0) {
+              setUsersWithStatus([]);
+              return;
           }
-        })
-      );
 
-      if (isMounted) {
-        setUsersWithStatus(updated);
-      }
-    };
+          const normalUsers = rawUsers.filter(
+              (user) => Number(user.type) === 0
+          );
 
-    checkOnlineStatuses();
+          setUsersWithStatus(
+              normalUsers.map((user) => ({
+                  ...user,
+                  isOnline: null,
+              }))
+          );
 
-    return () => {
-      isMounted = false;
-    };
+          for (const user of normalUsers) {
+              if (!isMounted) return;
+
+              try {
+                  console.log(
+                      `[ONLINE CHECK] Checking: ${user.name}`
+                  );
+
+                  const isOnline = await checkUserOnline(user.name);
+
+                  console.log(
+                      `[ONLINE RESULT] ${user.name}: ${isOnline}`
+                  );
+
+                  if (!isMounted) return;
+
+                  setUsersWithStatus((prev) =>
+                      prev.map((item) =>
+                          item.id === user.id
+                              ? { ...item, isOnline }
+                              : item
+                      )
+                  );
+              } catch (error) {
+                  console.error(
+                      `[ONLINE ERROR] ${user.name}:`,
+                      error
+                  );
+
+                  if (!isMounted) return;
+
+                  setUsersWithStatus((prev) =>
+                      prev.map((item) =>
+                          item.id === user.id
+                              ? { ...item, isOnline: null }
+                              : item
+                      )
+                  );
+              }
+          }
+      };
+
+      checkOnlineStatuses();
+
+      return () => {
+          isMounted = false;
+      };
   }, [rawUsers]);
+
 
   const displayList = useMemo(() => {
     const keyword = searchTerm.trim().toLowerCase();
@@ -175,16 +209,23 @@ export const FriendList = () => {
                     className="friend-avatar"
                   />
                   {/* Chấm trạng thái online/offline */}
-                  <span style={{
-                    position: 'absolute',
-                    bottom: '2px',
-                    right: '2px',
-                    width: '10px',
-                    height: '10px',
-                    borderRadius: '50%',
-                    backgroundColor: user.isOnline ? '#22c55e' : '#9ca3af',
-                    border: '2px solid #ffffff'
-                  }} />
+                  <span
+                    style={{
+                      position: 'absolute',
+                      bottom: '2px',
+                      right: '2px',
+                      width: '10px',
+                      height: '10px',
+                      borderRadius: '50%',
+                      backgroundColor:
+                        user.isOnline === true
+                          ? '#22c55e'
+                          : user.isOnline === false
+                            ? '#9ca3af'
+                            : '#f59e0b',
+                      border: '2px solid #ffffff'
+                    }}
+                  />
                 </div>
 
                 <div className="friend-info">
@@ -193,8 +234,21 @@ export const FriendList = () => {
                   </h4>
 
                   <p className="friend-status-text">
-                    <span style={{ color: user.isOnline ? '#22c55e' : '#6b7280' }}>
-                      {user.isOnline ? "Đang hoạt động" : "Offline"}
+                    <span
+                      style={{
+                        color:
+                          user.isOnline === true
+                            ? '#22c55e'
+                            : user.isOnline === false
+                              ? '#6b7280'
+                              : '#f59e0b'
+                      }}
+                    >
+                      {user.isOnline === true
+                        ? 'Đang hoạt động'
+                        : user.isOnline === false
+                          ? 'Offline'
+                          : 'Chưa xác định'}
                     </span>
                   </p>
                 </div>

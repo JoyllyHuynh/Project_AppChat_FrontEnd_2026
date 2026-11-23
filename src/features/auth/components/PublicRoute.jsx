@@ -3,6 +3,18 @@ import { useSelector } from 'react-redux';
 
 export default function PublicRoute() {
     const user = useSelector((s) => s.auth.user);
+    const initializing = useSelector((s) => s.auth.initializing);
     const location = useLocation();
-    return user ? <Navigate to={location.state?.from?.pathname || '/chat'} replace /> : <Outlet />;
+
+    if (initializing) {
+        return (
+            <div className="auth-loading">
+                Đang khôi phục phiên đăng nhập...
+            </div>
+        );
+    }
+
+    return user
+        ? <Navigate to={location.state?.from?.pathname || '/chat'} replace />
+        : <Outlet />;
 }
