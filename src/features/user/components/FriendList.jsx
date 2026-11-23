@@ -3,9 +3,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Search, X, Phone, MessageSquare, Edit2, UserPlus } from 'lucide-react';
 import { fetchUsers, setSelectedUserProfile } from '../userSlice';
 import { sendFriendRequest } from "../services/userSocketService";
-// import { request } from '../../../services/api/socketClient';
 import '../../../styles/friend-list.css';
-import { checkUserOnline } from "../services/userSocketService";
+import {checkUserOnline} from "../../presence/services/presenceSocketApi.js";
 
 export const FriendList = () => {
   console.log("[FRIEND LIST] Component rendered");

@@ -11,7 +11,7 @@ import { fetchChatMessages, fetchRoomChatMessages, sendChatMessage, sendRoomMess
 import { on } from "../../services/api/socketClient";
 import useTheme from "../../hooks/useTheme";
 import { joinRoom } from "../../features/chat/services/chatSocketService";
-import { checkUserOnline } from "../../features/user/services/userSocketService";
+import useConversationPresence from "../../features/presence/hooks/useConversationPresence";
 
 const parseMessageDate = (value) => {
     if (value == null) return null;
@@ -66,9 +66,11 @@ function MainLayout() {
     });
 
     const [activeId, setActiveId] = useState(null);
-    const [onlineStatuses, setOnlineStatuses] = useState({});
+
     const activeIdRef = useRef(activeId);
+
     const [messages, setMessages] = useState(initialMessages);
+
     const [labelData, setLabelData] = useState(() => ({
         owner: username,
         ...getConversationLabelData(username),
@@ -584,10 +586,8 @@ function MainLayout() {
         (item) => item.id === activeId
     );
 
-    const activeOnlineStatus =
-    activeConversation && Number(activeConversation.type) === 0
-        ? onlineStatuses[activeConversation.name?.trim()] || "checking"
-        : "unknown";
+    const { conversationsWithStatus, activeConversationWithStatus } =
+        useConversationPresence(conversations, activeConversation);
 
     const personalConversations = conversations.filter(
         (conversation) => Number(conversation.type) === 0
@@ -596,79 +596,6 @@ function MainLayout() {
     const groupConversations = conversations.filter(
         (conversation) => Number(conversation.type) === 1
     );
-
-    const personalUsernamesKey = JSON.stringify(
-        [...new Set(
-            personalConversations
-                .map((conversation) => conversation.name?.trim())
-                .filter(Boolean)
-        )].sort()
-    );
-
-    useEffect(() => {
-        const usernames = JSON.parse(personalUsernamesKey);
-
-        if (usernames.length === 0) return;
-
-        let cancelled = false;
-        let timeoutId = null;
-
-        setOnlineStatuses((prev) => {
-            const updated = { ...prev };
-
-            usernames.forEach((username) => {
-                if (!updated[username]) {
-                    updated[username] = "checking";
-                }
-            });
-
-            return updated;
-        });
-
-        const checkUsers = async () => {
-            for (const username of usernames) {
-                if (cancelled) return;
-
-                try {
-                    const isOnline = await checkUserOnline(username);
-
-                    if (cancelled) return;
-
-                    setOnlineStatuses((prev) => ({
-                        ...prev,
-                        [username]: isOnline ? "online" : "offline",
-                    }));
-                } catch (error) {
-                    if (cancelled) return;
-
-                    console.error(
-                        `[MAIN ONLINE CHECK] ${username}:`,
-                        error
-                    );
-
-                    setOnlineStatuses((prev) => ({
-                        ...prev,
-                        [username]: "unknown",
-                    }));
-                }
-            }
-
-            if (!cancelled) {
-                timeoutId = setTimeout(checkUsers, 30000);
-            }
-        };
-
-        checkUsers();
-
-        return () => {
-            cancelled = true;
-
-            if (timeoutId) {
-                clearTimeout(timeoutId);
-            }
-        };
-    }, [personalUsernamesKey]);
-
 
     const activeMessages = activeConversation
         ? (
@@ -777,6 +704,7 @@ function MainLayout() {
             );
         });
     }, [users, usersLoading, labelAssignments]);
+
 
     useEffect(() => {
         const unsubscribe = on("SEND_CHAT", (packet) => {
@@ -921,8 +849,7 @@ function MainLayout() {
             <Sidebar theme={theme} onToggleTheme={toggleTheme} />
 
             <ConversationList
-                conversations={conversations}
-                onlineStatuses={onlineStatuses}
+                conversations={conversationsWithStatus}
                 groupConversations={groupConversations}
                 activeId={activeId}
                 onSelect={handleSelectConversation}
@@ -940,8 +867,7 @@ function MainLayout() {
 
 
             <ChatWindow
-                conversation={activeConversation}
-                onlineStatus={activeOnlineStatus}
+                conversation={activeConversationWithStatus}
                 messages={activeMessages}
                 currentUser={{
                     ...currentUser,
@@ -950,7 +876,7 @@ function MainLayout() {
                 }}
                 onSendMessage={handleSendMessage}
                 onSimulateIncoming={handleSimulateIncoming}
-                conversations={conversations}
+                conversations={conversationsWithStatus}
                 onBack={handleBackToConversationList}
                 onUpdateConversationName={handleUpdateConversationName}
             />

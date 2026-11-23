@@ -32,64 +32,6 @@ export const getUserList = async () => {
     }
 };
 
-
-export const checkUserOnline = (username) => {
-    const normalizedUsername = username?.trim();
-
-    if (!normalizedUsername) {
-        return Promise.reject(
-            new Error("Username is required.")
-        );
-    }
-
-    if (onlineChecksInFlight.has(normalizedUsername)) {
-        console.log(
-            `[ONLINE CHECK] Reusing pending request: ${normalizedUsername}`
-        );
-
-        return onlineChecksInFlight.get(normalizedUsername);
-    }
-
-    console.log(
-        `[ONLINE REQUEST] Checking: ${normalizedUsername}`
-    );
-
-    const requestPromise = request("CHECK_USER_ONLINE", {
-        user: normalizedUsername,
-    })
-        .then((data) => {
-            if (typeof data?.status !== "boolean") {
-                throw new Error("Invalid online status response.");
-            }
-
-            console.log(
-                `[ONLINE RESPONSE] ${normalizedUsername}:`,
-                data.status
-            );
-
-            return data.status;
-        })
-        .catch((error) => {
-            console.error(
-                `[ONLINE ERROR] ${normalizedUsername}:`,
-                error
-            );
-
-            throw error;
-        })
-        .finally(() => {
-            onlineChecksInFlight.delete(normalizedUsername);
-        });
-
-    onlineChecksInFlight.set(
-        normalizedUsername,
-        requestPromise
-    );
-
-    return requestPromise;
-};
-
-
 export const getFriendRequests = async () => {
     try {
         const data = await request("GET_FRIEND_REQUESTS", {});
