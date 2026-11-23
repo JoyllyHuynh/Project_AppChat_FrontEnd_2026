@@ -679,10 +679,9 @@ function ChatWindow({
                                     <UserRound size={24} />
                                 )}
 
-                                {Number(conversation.type) === 0 &&
-                                    onlineStatus === "online" && (
-                                        <span className="online-indicator"></span>
-                                    )}
+                                {conversation.status === "online" && (
+                                    <span className="online-indicator"></span>
+                                )}
                             </div>
 
                             <div className="chat-user-details">
@@ -715,17 +714,9 @@ function ChatWindow({
                                     </button>
                                 </div>
 
-                                {Number(conversation.type) === 0 && (
-                                    <p style={{ margin: 0 }}>
-                                        {onlineStatus === "online"
-                                            ? "Đang hoạt động"
-                                            : onlineStatus === "offline"
-                                                ? "Offline"
-                                                : onlineStatus === "checking"
-                                                    ? "Đang kiểm tra..."
-                                                    : "Chưa xác định"}
-                                    </p>
-                                )}
+                                <p style={{ margin: 0 }}>
+                                    {conversation.status === "online" ? "Active now" : "Offline"}
+                                </p>
                             </div>
 
                             {isRenameModalOpen && (
