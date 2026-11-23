@@ -5,6 +5,7 @@ import authReducer from "../store/authSlice";
 import userReducer from "../features/user/userSlice";
 import chatReducer from "../features/chat/chatSlice";
 import settingsReducer from "../features/settings/settingsSlice";
+import presenceReducer from "../features/presence/presenceSlice";
 
 export const store = configureStore({
     reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
         user: userReducer,
         chat: chatReducer,
         notifications: notificationReducer,
-        settings: settingsReducer
+        settings: settingsReducer,
+        presence: presenceReducer
     }
 });
