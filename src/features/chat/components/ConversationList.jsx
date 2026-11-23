@@ -16,6 +16,7 @@ const DEFAULT_LABEL_COLOR = "#3B82F6";
 
 function ConversationList({
     conversations,
+    onlineStatuses,
     activeId,
     onSelect,
     onSearchUser,
@@ -28,7 +29,7 @@ function ConversationList({
     onUpdateConversationName,
 }) {
     const [keyword, setKeyword] = useState("");
-
+    const [searchMode, setSearchMode] = useState("all");
     const [openLabelConversationId, setOpenLabelConversationId] = useState(null);
 
     const [selectedLabelId, setSelectedLabelId] = useState("all");
@@ -59,7 +60,12 @@ function ConversationList({
             activeLabelId === "all" ||
             conversation.labelId === activeLabelId;
 
-        return matchesKeyword && matchesLabel;
+        const matchesMode =
+            searchMode === "all" ||
+            (searchMode === "rooms" && Number(conversation.type) === 1) ||
+            (searchMode === "users" && Number(conversation.type) === 0);
+
+        return matchesKeyword && matchesLabel && matchesMode;
     });
 
     const dispatch = useDispatch();
@@ -70,7 +76,6 @@ function ConversationList({
         serverSearchError,
     } = useSelector((state) => state.user);
 
-    const [searchMode, setSearchMode] = useState("all");
     const [showSearchResults, setShowSearchResults] = useState(false);
 
     const filteredServerSearchResults = serverSearchResults.filter((item) => {
@@ -154,13 +159,9 @@ function ConversationList({
         if (!trimmedKeyword) return;
 
         try {
-            setShowSearchResults(false);
+            setShowSearchResults(true);
 
-            if (searchMode === "rooms") {
-                await onSearchRoom(trimmedKeyword);
-            } else {
-                await onSearchUser(trimmedKeyword);
-            }
+            await dispatch(searchServerUsers());
         } catch (error) {
             console.error("[SEARCH] Failed:", error);
         }
@@ -247,7 +248,10 @@ function ConversationList({
                     type="button"
                     className={`search-mode-button ${searchMode === "all" ? "active" : ""
                         }`}
-                    onClick={() => setSearchMode("all")}
+                    onClick={() => {
+                        setSearchMode("all");
+                        setShowSearchResults(false);
+                    }}
                     aria-pressed={searchMode === "all"}
                 >
                     All
@@ -257,7 +261,10 @@ function ConversationList({
                     type="button"
                     className={`search-mode-button ${searchMode === "rooms" ? "active" : ""
                         }`}
-                    onClick={() => setSearchMode("rooms")}
+                    onClick={() => {
+                        setSearchMode("rooms");
+                        setShowSearchResults(false);
+                    }}
                     aria-pressed={searchMode === "rooms"}
                 >
                     <Users size={14} />
@@ -268,7 +275,10 @@ function ConversationList({
                     type="button"
                     className={`search-mode-button ${searchMode === "users" ? "active" : ""
                         }`}
-                    onClick={() => setSearchMode("users")}
+                    onClick={() => {
+                        setSearchMode("users");
+                        setShowSearchResults(false);
+                    }}
                     aria-pressed={searchMode === "users"}
                 >
                     <Users size={14} />
@@ -401,7 +411,7 @@ function ConversationList({
                                             )}
 
                                             {Number(conversation.type) === 0 &&
-                                                conversation.status === "online" && (
+                                                onlineStatuses?.[conversation.name?.trim()] === "online" && (
                                                     <span className="online-indicator"></span>
                                                 )}
                                         </div>

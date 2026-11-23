@@ -180,16 +180,18 @@ export const sendChatMessage = createAsyncThunk(
     async ({ to, mes, name }, { rejectWithValue }) => {
         try {
             const message = await sendPeopleChatMessage(to, mes);
-            const responseDate = parseMessageDate(message.createAt);
 
             return {
                 ...message,
-                name: message.name || name,
+                id: `temp-${Date.now()}-${Math.random()}`,
+                name: message.name || name || "",
+                own: name || "",
+                senderId: name || "",
                 to: message.to || to,
+                type: 0,
                 mes: message.mes || mes.trim(),
-                createAt: responseDate
-                    ? responseDate.toISOString()
-                    : new Date().toISOString(),
+                createAt: new Date().toISOString(),
+                _pending: true,
             };
         } catch (error) {
             return rejectWithValue(
@@ -364,9 +366,20 @@ const chatSlice = createSlice({
                 state.sendError = null;
             })
 
-            .addCase(sendChatMessage.fulfilled, (state) => {
+            .addCase(sendChatMessage.fulfilled, (state, action) => {
                 state.sending = false;
                 state.sendError = null;
+
+                const message = action.payload;
+
+                if (!message?.to || !message?.mes) return;
+
+                const conversationName = message.to;
+
+                state.messagesByUser[conversationName] = mergeMessages(
+                    state.messagesByUser[conversationName] || [],
+                    [message]
+                );
             })
 
             .addCase(sendChatMessage.rejected, (state, action) => {
