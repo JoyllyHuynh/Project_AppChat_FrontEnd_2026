@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import useConnectionStatus from "../../hooks/useConnectionStatus";
+import useConnectionStatus from "../../features/auth/hooks/useConnectionStatus.js";
 
 const MESSAGES = {
     offline: "You’re offline. Check your internet connection.",

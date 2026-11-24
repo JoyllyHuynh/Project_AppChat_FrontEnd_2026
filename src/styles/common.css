@@ -279,3 +279,25 @@ button {
     font-weight: 500;
     color: color-mix(in srgb, var(--color-online) 70%, var(--color-text));
 }
+
+.connection-banner {
+    position: fixed;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2000;
+    max-width: calc(100vw - 24px);
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #fff;
+    text-align: center;
+}
+.connection-banner.lost {
+    background: var(--color-danger);
+}
+
+.connection-banner.restored {
+    background: color-mix(in srgb, var(--color-online) 80%, black);
+}
