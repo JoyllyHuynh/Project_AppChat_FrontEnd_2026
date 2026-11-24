@@ -12,6 +12,20 @@ const hooks = { onSessionCode: null, onSessionExpired: null };
 const pending = new Map();
 const listeners = new Map();
 let requestSeq = 0;
+let connectionStatus = 'closed';
+const statusListeners = new Set();
+
+function setStatus(next) {
+    if (connectionStatus === next) return;
+    connectionStatus = next;
+    statusListeners.forEach((fn) => fn(next));
+}
+
+export const getConnectionStatus = () => connectionStatus;
+export const onConnectionStatusChange = (handler) => {
+    statusListeners.add(handler);
+    return () => statusListeners.delete(handler);
+};
 const NO_AUTH_EVENTS = ["REGISTER", "LOGIN", "RE_LOGIN"];
 const RESPONSE_EVENT_MAP = {
     CHAT_CHECK_USER_ONLINE: "CHECK_USER_ONLINE",
@@ -164,11 +178,13 @@ export function connect() {
     if (connecting) return connecting;
     manualClose = false;
     connecting = new Promise((resolve, reject) => {
+        setStatus(connectionStatus === 'reconnecting' ? 'reconnecting' : 'connecting');
         const ws = new WebSocket(WS_URL);
         socket = ws;
         ws.onopen = () => {
             retry = 0;
             connecting = null;
+            setStatus('open');
             resolve();
         };
         ws.onmessage = handleMessage;
@@ -177,6 +193,7 @@ export function connect() {
             if (socket !== ws) return;
             socket = null;
             connecting = null;
+            setStatus(!manualClose && session ? 'reconnecting' : 'closed');
             failAllPending(new Error('Connection lost.'));
             if (!manualClose && session) scheduleReconnect();
         };
@@ -188,6 +205,7 @@ export function disconnect() {
     manualClose = true;
     clearTimeout(reconnectTimer);
     reconnectTimer = null;
+    setStatus('closed');
     const ws = socket;
     socket = null;
     connecting = null;
@@ -238,6 +256,14 @@ export async function reLogin() {
         }
         throw err;
     }
+}
+
+export function reconnectNow() {
+    if (!session || isOpen() || connecting) return;
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+    retry = 0;
+    scheduleReconnect();
 }
 
 function scheduleReconnect() {
