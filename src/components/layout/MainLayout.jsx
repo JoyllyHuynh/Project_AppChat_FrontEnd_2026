@@ -12,6 +12,7 @@ import { on } from "../../services/api/socketClient";
 import useTheme from "../../hooks/useTheme";
 import { joinRoom } from "../../features/chat/services/chatSocketService";
 import useConversationPresence from "../../features/presence/hooks/useConversationPresence";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const parseMessageDate = (value) => {
     if (value == null) return null;
@@ -49,6 +50,9 @@ function MainLayout() {
     const username = authUser?.username?.trim().toLowerCase() || "guest";
 
     const { theme, toggleTheme } = useTheme();
+
+    const location = useLocation();
+    const navigate = useNavigate();
 
     const [conversations, setConversations] = useState(() => {
         try {
@@ -140,6 +144,51 @@ function MainLayout() {
             );
         }
     };
+
+    useEffect(() => {
+        const targetName = location.state?.selectedConversationName;
+        const targetType = location.state?.type;
+
+        if (!targetName || conversations.length === 0) return;
+
+        const matchedConversation = conversations.find(
+            (item) =>
+                String(item.name || "").trim().toLowerCase() ===
+                String(targetName).trim().toLowerCase() &&
+                (targetType === undefined || Number(item.type) === Number(targetType))
+        );
+
+        if (!matchedConversation) return;
+
+        activeIdRef.current = matchedConversation.id;
+        setActiveId(matchedConversation.id);
+
+        setConversations((prev) =>
+            prev.map((item) =>
+                String(item.id) === String(matchedConversation.id)
+                    ? { ...item, unread: 0 }
+                    : item
+            )
+        );
+
+        if (Number(matchedConversation.type) === 1) {
+            dispatch(
+                fetchRoomChatMessages({
+                    name: matchedConversation.name,
+                    page: 1,
+                })
+            );
+        } else {
+            dispatch(
+                fetchChatMessages({
+                    name: matchedConversation.name,
+                    page: 1,
+                })
+            );
+        }
+
+        navigate(location.pathname, { replace: true, state: null });
+    }, [location.state, location.pathname, conversations, dispatch, navigate]);
 
     const handleSearchUser = async (searchName) => {
         const trimmedName = searchName.trim();

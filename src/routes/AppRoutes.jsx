@@ -11,6 +11,7 @@ import RegisterPage from "../features/auth/pages/RegisterPage";
 import NotificationsPage from "../features/notifications/pages/NotificationsPage";
 import ProfilePage from "../features/profile/pages/ProfilePage";
 import SettingsPage from "../features/settings/pages/SettingsPage";
+import GroupList from "../features/user/components/GroupList";
 
 function AppRoutes() {
     return (
@@ -33,7 +34,7 @@ function AppRoutes() {
                 <Route path="/friends" element={<FriendPage />}>
                     <Route index element={<Navigate to="/friends/list" replace />} />
                     <Route path="list" element={<FriendList />} />
-                    <Route path="groups" element={<div style={{ flex: 1, padding: '24px' }}><h2>Danh sách nhóm và cộng đồng</h2></div>} />
+                    <Route path="groups" element={<GroupList />} />                    
                     <Route path="requests" element={<div style={{ flex: 1, padding: '24px' }}><h2>Lời mời kết bạn</h2></div>} />
                     <Route path="invites" element={<div style={{ flex: 1, padding: '24px' }}><h2>Lời mời vào nhóm và cộng đồng</h2></div>} />
                 </Route>
