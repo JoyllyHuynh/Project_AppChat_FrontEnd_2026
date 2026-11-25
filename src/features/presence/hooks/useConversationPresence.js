@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
-import { applyPresence, pickPresenceNames } from "../services/presenceUtils";
+import { applyPresence, buildOnlineStatuses, getActiveOnlineStatus, pickPresenceNames} from "../services/presenceUtils";
 import usePresence from "./usePresence";
 
 export default function useConversationPresence(conversations, activeConversation) {
@@ -23,5 +23,16 @@ export default function useConversationPresence(conversations, activeConversatio
         [activeConversation, byUser]
     );
 
-    return { conversationsWithStatus, activeConversationWithStatus };
+    const onlineStatuses = useMemo(
+        () => buildOnlineStatuses(conversations, byUser),
+        [conversations, byUser]
+    );
+    const activeOnlineStatus = getActiveOnlineStatus(activeConversation, onlineStatuses);
+
+    return {
+        conversationsWithStatus,
+        activeConversationWithStatus,
+        onlineStatuses,
+        activeOnlineStatus,
+    };
 }

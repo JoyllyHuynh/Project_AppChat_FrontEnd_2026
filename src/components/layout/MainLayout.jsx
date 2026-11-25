@@ -635,8 +635,12 @@ function MainLayout() {
         (item) => item.id === activeId
     );
 
-    const { conversationsWithStatus, activeConversationWithStatus } =
-        useConversationPresence(conversations, activeConversation);
+    const {
+        conversationsWithStatus,
+        activeConversationWithStatus,
+        onlineStatuses,
+        activeOnlineStatus,
+    } = useConversationPresence(conversations, activeConversation);
 
     const personalConversations = conversations.filter(
         (conversation) => Number(conversation.type) === 0
@@ -899,6 +903,7 @@ function MainLayout() {
 
             <ConversationList
                 conversations={conversationsWithStatus}
+                onlineStatuses={onlineStatuses}
                 groupConversations={groupConversations}
                 activeId={activeId}
                 onSelect={handleSelectConversation}
@@ -917,6 +922,7 @@ function MainLayout() {
 
             <ChatWindow
                 conversation={activeConversationWithStatus}
+                onlineStatus={activeOnlineStatus}
                 messages={activeMessages}
                 currentUser={{
                     ...currentUser,

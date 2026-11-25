@@ -410,10 +410,9 @@ function ConversationList({
                                                 />
                                             )}
 
-                                            {Number(conversation.type) === 0 &&
-                                                onlineStatuses?.[conversation.name?.trim()] === "online" && (
-                                                    <span className="online-indicator"></span>
-                                                )}
+                                            {conversation.status === "online" && (
+                                                <span className="online-indicator"></span>
+                                            )}
                                         </div>
 
                                         <div className="conversation-info">
