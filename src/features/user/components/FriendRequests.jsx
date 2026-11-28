@@ -46,7 +46,8 @@ export const FriendRequests = () => {
 
   return (
     <div className="friend-requests-container">
-      <h2 className="friend-requests-title">Lời mời kết bạn</h2>
+      <h2 className="friend-requests-title">Friend Invitation
+      </h2>
 
       <h3 className="friend-section-title">Lời mời đã nhận ({requests.length})</h3>
 

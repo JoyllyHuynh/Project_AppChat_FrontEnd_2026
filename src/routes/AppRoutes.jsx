@@ -34,9 +34,9 @@ function AppRoutes() {
                 <Route path="/friends" element={<FriendPage />}>
                     <Route index element={<Navigate to="/friends/list" replace />} />
                     <Route path="list" element={<FriendList />} />
-                    <Route path="groups" element={<GroupList />} />                    
-                    <Route path="requests" element={<div style={{ flex: 1, padding: '24px' }}><h2>Lời mời kết bạn</h2></div>} />
-                    <Route path="invites" element={<div style={{ flex: 1, padding: '24px' }}><h2>Lời mời vào nhóm và cộng đồng</h2></div>} />
+                    <Route path="groups" element={<GroupList />} />
+                    <Route path="requests" element={<div style={{ flex: 1, padding: '24px' }}><h2>Friend Invitation</h2></div>} />
+                    <Route path="invites" element={<div style={{ flex: 1, padding: '24px' }}><h2>Group and Community Invites</h2></div>} />
                 </Route>
             </Route>
 

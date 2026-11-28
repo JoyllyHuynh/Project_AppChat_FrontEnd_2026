@@ -33,7 +33,7 @@ export const FriendPage = () => {
         <Route path="groups" element={<GroupList />} />
         <Route path="invites" element={
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb', color: '#6b7280' }}>
-            <h2>Lời mời vào nhóm và cộng đồng</h2>
+            <h2>Group and Community Invites</h2>
           </div>
         } />
       </Routes>

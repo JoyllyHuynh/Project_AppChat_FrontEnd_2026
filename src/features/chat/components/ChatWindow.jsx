@@ -147,6 +147,7 @@ function ChatWindow({
     const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
     const [newGroupName, setNewGroupName] = useState('');
 
+
     const handleSaveRoomName = () => {
         if (!newGroupName.trim()) return;
 
@@ -214,10 +215,25 @@ function ChatWindow({
     }, [activeMessageMenu]);
 
     const [isInfoPanelOpen, setIsInfoPanelOpen] = useState(false);
-    const [groupMembers, setGroupMembers] = useState([
-        { name: 'Nguyễn Trọng Tín', avatar: '' },
-        { name: 'Vân Vân', avatar: '' }
-    ]);
+    const membersByRoom = useSelector(
+        (state) => state.chat.membersByRoom || {}
+    );
+
+    const rawRoomMembers =
+        Number(conversation?.type) === 1
+            ? membersByRoom[conversation.name] || []
+            : [];
+
+    const roomMembers = rawRoomMembers.map((member) => {
+        if (typeof member === "string") {
+            return { name: member, avatar: "" };
+        }
+        return {
+            ...member,
+            name: member.name || member.username || member.userName || "",
+            avatar: member.avatar || member.avatarUrl || "",
+        };
+    });
 
     useLayoutEffect(() => {
         if (activeMessageMenu === null) return;
@@ -669,23 +685,23 @@ function ChatWindow({
 
                         <div className="chat-user-info">
 
-                        <div className="chat-header-avatar">
-                            {Number(conversation.type) === 1 ? (
-                                <Users size={24} />
-                            ) : conversation.avatar ? (
-                                <img
-                                    src={conversation.avatar}
-                                    alt={conversation.name}
-                                />
-                            ) : (
-                                <UserRound size={24} />
-                            )}
-
-                            {Number(conversation.type) === 0 &&
-                                conversation.status === "online" && (
-                                    <span className="online-indicator"></span>
+                            <div className="chat-header-avatar">
+                                {Number(conversation.type) === 1 ? (
+                                    <Users size={24} />
+                                ) : conversation.avatar ? (
+                                    <img
+                                        src={conversation.avatar}
+                                        alt={conversation.name}
+                                    />
+                                ) : (
+                                    <UserRound size={24} />
                                 )}
-                        </div>
+
+                                {Number(conversation.type) === 0 &&
+                                    conversation.status === "online" && (
+                                        <span className="online-indicator"></span>
+                                    )}
+                            </div>
 
                             <div className="chat-user-details">
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1241,13 +1257,13 @@ function ChatWindow({
                 </div>
 
                 {/* Cột bên phải: Bảng thông tin nhóm (chỉ hiện khi bật `isInfoPanelOpen`) */}
-                {isInfoPanelOpen && (
+                {isInfoPanelOpen && Number(conversation.type) === 1 && (
                     <ChatInfoPanel
                         roomName={conversation.customName || conversation.name}
-                        members={groupMembers}
+                        members={roomMembers}
                         onAddMember={() => setIsAddMemberOpen(true)}
                         onRemoveMember={(memberName) => {
-                            setGroupMembers(prev => prev.filter(m => (m.name || m) !== memberName));
+                            console.log("Remove member:", memberName);
                         }}
                     />
                 )}
@@ -1257,7 +1273,7 @@ function ChatWindow({
             <AddMemberModal
                 isOpen={isAddMemberOpen}
                 onClose={() => setIsAddMemberOpen(false)}
-                existingMembers={groupMembers.map(m => m.name || m)}
+                existingMembers={roomMembers.map(m => m.name || m)}
                 onAddMembers={(newMemberIds) => {
                     const addedMembersFormatted = newMemberIds.map(id => ({ name: id, avatar: '' }));
                     setGroupMembers(prev => [...prev, ...addedMembersFormatted]);

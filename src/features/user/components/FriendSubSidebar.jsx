@@ -48,7 +48,7 @@ export const FriendSubSidebar = () => {
           className={`sub-sidebar-item ${isActive('/friends/list') ? 'active' : ''}`}
         >
           <Users size={20} />
-          <span className="sub-sidebar-text">Danh sách bạn bè</span>
+          <span className="sub-sidebar-text">Friend List</span>
         </div>
 
         <div
@@ -56,7 +56,7 @@ export const FriendSubSidebar = () => {
           className={`sub-sidebar-item ${isActive('/friends/groups') ? 'active' : ''}`}
         >
           <UsersRound size={20} />
-          <span className="sub-sidebar-text">Danh sách nhóm và cộng đồng</span>
+          <span className="sub-sidebar-text">List groups and Communities</span>
         </div>
 
         <div
@@ -64,7 +64,8 @@ export const FriendSubSidebar = () => {
           className={`sub-sidebar-item ${isActive('/friends/requests') ? 'active' : ''}`}
         >
           <UserPlus size={20} />
-          <span className="sub-sidebar-text">Lời mời kết bạn</span>
+          <span className="sub-sidebar-text">Friend Invitation
+</span>
         </div>
 
         <div
@@ -72,7 +73,7 @@ export const FriendSubSidebar = () => {
           className={`sub-sidebar-item ${isActive('/friends/invites') ? 'active' : ''}`}
         >
           <UserCheck size={20} />
-          <span className="sub-sidebar-text">Lời mời vào nhóm và cộng đồng</span>
+          <span className="sub-sidebar-text">Group and Community Invites</span>
         </div>
       </div>
 
