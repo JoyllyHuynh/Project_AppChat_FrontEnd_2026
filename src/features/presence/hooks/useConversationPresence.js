@@ -5,12 +5,32 @@ import usePresence from "./usePresence";
 
 export default function useConversationPresence(conversations, activeConversation) {
     const byUser = useSelector((state) => state.presence.byUser);
+    const membersByRoom = useSelector(
+        (state) => state.chat.membersByRoom
+    );
+
     const activeName = activeConversation?.name;
 
-    const names = useMemo(
-        () => pickPresenceNames(conversations, activeName),
-        [conversations, activeName]
+    const groupMemberNames = useMemo(
+        () => Object.values(membersByRoom || {})
+            .flat()
+            .map((member) => member.name)
+            .filter(Boolean),
+        [membersByRoom]
     );
+
+    const names = useMemo(() => {
+        const personalNames = pickPresenceNames(
+            conversations,
+            activeName
+        );
+
+        return [...new Set([
+            ...personalNames,
+            ...groupMemberNames,
+        ])];
+    }, [conversations, activeName, groupMemberNames]);
+
     usePresence(names);
 
     const conversationsWithStatus = useMemo(
@@ -19,9 +39,16 @@ export default function useConversationPresence(conversations, activeConversatio
     );
 
     const activeConversationWithStatus = useMemo(
-        () => (activeConversation ? applyPresence([activeConversation], byUser)[0] : undefined),
+        () => (
+            activeConversation
+                ? applyPresence([activeConversation], byUser)[0]
+                : undefined
+        ),
         [activeConversation, byUser]
     );
 
-    return { conversationsWithStatus, activeConversationWithStatus };
+    return {
+        conversationsWithStatus,
+        activeConversationWithStatus,
+    };
 }

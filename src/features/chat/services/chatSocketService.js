@@ -86,13 +86,55 @@ export const getRoomChatMessages = async (name, page = 1) => {
         if (!Array.isArray(messages)) {
             throw new Error("Không tìm thấy danh sách tin nhắn nhóm.");
         }
+        const memberList = data.userList ?? data.user;
 
-        return messages;
+        const members = Array.isArray(memberList)
+            ? memberList.map((user) => ({
+                id: user.id,
+                name: user.name,
+            }))
+            : null;
+
+        return {
+            messages,
+            members,
+        };
     } catch (error) {
         console.error("[Chat API] GET_ROOM_CHAT_MES failed:", error);
         throw error;
     }
 };
+
+/**
+ * Lấy danh sách thành viên nhóm.
+ * @param {string} name
+ */
+export const getRoomMembers = async (name) => {
+    if (!name?.trim()) {
+        throw new Error("Tên phòng không được để trống.");
+    }
+
+    const data = await request("GET_ROOM_CHAT_MES", {
+        name: name.trim(),
+        page: 1,
+    });
+
+    if (!data) {
+        throw new Error("Không nhận được dữ liệu phòng.");
+    }
+
+    const memberList = data.userList ?? data.user;
+
+    if (!Array.isArray(memberList)) {
+        throw new Error("Danh sách thành viên nhóm không hợp lệ.");
+    }
+
+    return memberList.map((user) => ({
+        id: user.id,
+        name: user.name,
+    }));
+};
+
 
 /**
  * @param {string} to

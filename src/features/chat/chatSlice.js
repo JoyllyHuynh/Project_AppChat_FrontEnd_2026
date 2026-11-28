@@ -1,7 +1,7 @@
 
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-import {getPeopleChatMessages, sendPeopleChatMessage,getRoomChatMessages, sendRoomChatMessage as sendRoomChatMessageService,} from "./services/chatSocketService";
+import {getPeopleChatMessages, sendPeopleChatMessage,getRoomChatMessages, getRoomMembers, sendRoomChatMessage as sendRoomChatMessageService,} from "./services/chatSocketService";
 
 const parseMessageDate = (value) => {
     if (value == null) return null;
@@ -132,11 +132,12 @@ export const fetchRoomChatMessages = createAsyncThunk(
     "chat/fetchRoomChatMessages",
     async ({ name, page = 1 }, { rejectWithValue }) => {
         try {
-            const messages = await getRoomChatMessages(name, page);
+            const result = await getRoomChatMessages(name, page);
 
             return {
                 name,
-                messages,
+                messages: result.messages,
+                members: result.members,
                 page,
             };
         } catch (error) {
@@ -144,6 +145,27 @@ export const fetchRoomChatMessages = createAsyncThunk(
                 name,
                 message:
                     error.message || "Unable to load room messages.",
+            });
+        }
+    }
+);
+
+export const fetchRoomMembers = createAsyncThunk(
+    "chat/fetchRoomMembers",
+    async ({ name }, { rejectWithValue }) => {
+        try {
+            const members = await getRoomMembers(name);
+
+            return {
+                name,
+                members,
+            };
+        } catch (error) {
+            return rejectWithValue({
+                name,
+                message:
+                    error.message ||
+                    "Không thể tải danh sách thành viên nhóm.",
             });
         }
     }
@@ -209,6 +231,7 @@ const chatSlice = createSlice({
         loadingByUser: {},
         errorByUser: {},
         messagesByRoom: {},
+        membersByRoom: {},
         loadingByRoom: {},
         errorByRoom: {},
         sendingRoom: false,
@@ -396,13 +419,19 @@ const chatSlice = createSlice({
             })
 
             .addCase(fetchRoomChatMessages.fulfilled, (state, action) => {
-                const { name, messages } = action.payload;
+                const { name, messages, members } = action.payload;
 
                 state.loadingByRoom[name] = false;
+
                 state.messagesByRoom[name] = mergeMessages(
                     state.messagesByRoom[name] || [],
                     messages
                 );
+
+                if (Array.isArray(members)) {
+                    state.membersByRoom[name] = members;
+                }
+
                 state.errorByRoom[name] = null;
             })
 
@@ -414,6 +443,18 @@ const chatSlice = createSlice({
                     action.payload?.message ||
                     action.error.message ||
                     "Unable to load room messages.";
+            })
+
+            .addCase(fetchRoomMembers.fulfilled, (state, action) => {
+                const { name, members } = action.payload;
+
+                state.membersByRoom[name] = members;
+            })
+            .addCase(fetchRoomMembers.rejected, (state, action) => {
+                console.error(
+                    `[Redux] Cannot load members of ${action.payload?.name}:`,
+                    action.payload?.message
+                );
             })
 
             .addCase(sendRoomMessage.pending, (state) => {

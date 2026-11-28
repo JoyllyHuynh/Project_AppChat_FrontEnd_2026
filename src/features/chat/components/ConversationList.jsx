@@ -433,6 +433,17 @@ function ConversationList({
                                                 </span>
                                             </div>
 
+                                            {Number(conversation.type) === 1 &&
+                                                conversation.membersLoaded &&
+                                                conversation.onlineCount > 0 && (
+                                                    <div className="group-online-count">
+                                                        <span className="online-indicator"></span>
+                                                        <span>
+                                                            {conversation.onlineCount} online
+                                                        </span>
+                                                    </div>
+                                                )}
+
                                             <div className="conversation-bottom">
                                                 <p>{conversation.lastMessage}</p>
 
@@ -454,7 +465,7 @@ function ConversationList({
                                                     {assignedLabel.name}
                                                 </span>
                                             )}
-                                        </div>
+                                        </div>                                        
                                     </button>
 
                                     <button

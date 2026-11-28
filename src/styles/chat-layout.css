@@ -2376,3 +2376,20 @@ textarea:focus-visible {
     font-weight: 600;
 }
 
+.group-online-count {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    font-size: 11px;
+    color: #22c55e;
+}
+
+.group-online-count .online-indicator {
+    position: static;
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    flex-shrink: 0;
+    border: none;
+}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Sidebar from "./Sidebar";
 import ConversationList from "../../features/chat/components/ConversationList";
 import ChatWindow from "../../features/chat/components/ChatWindow";
@@ -7,7 +7,7 @@ import { currentUser, conversations as initialConversations, initialMessages, } 
 import { getConversationLabelData, saveConversationLabelData, generateLabelId, } from "../../features/chat/services/conversationLabelService";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUsers } from "../../features/user/userSlice";
-import { fetchChatMessages, fetchRoomChatMessages, sendChatMessage, sendRoomMessage, receiveChatMessage, receiveRoomChatMessage, } from "../../features/chat/chatSlice";
+import { fetchChatMessages, fetchRoomChatMessages,fetchRoomMembers, sendChatMessage, sendRoomMessage, receiveChatMessage, receiveRoomChatMessage, } from "../../features/chat/chatSlice";
 import { on } from "../../services/api/socketClient";
 import useTheme from "../../hooks/useTheme";
 import { joinRoom } from "../../features/chat/services/chatSocketService";
@@ -72,6 +72,8 @@ function MainLayout() {
     const [activeId, setActiveId] = useState(null);
 
     const activeIdRef = useRef(activeId);
+
+    const requestedRoomMembersRef = useRef(new Set());
 
     const [messages, setMessages] = useState(initialMessages);
 
@@ -619,6 +621,7 @@ function MainLayout() {
     const {
         messagesByUser,
         messagesByRoom,
+        membersByRoom,
         loadingByUser,
         loadingByRoom,
         errorByUser,
@@ -637,6 +640,31 @@ function MainLayout() {
 
     const { conversationsWithStatus, activeConversationWithStatus } =
         useConversationPresence(conversations, activeConversation);
+    
+    const presenceByUser = useSelector(
+        (state) => state.presence.byUser
+    );
+
+    const conversationsWithGroupPresence = useMemo(() => {
+        return conversationsWithStatus.map((conversation) => {
+            if (Number(conversation.type) !== 1) {
+                return conversation;
+            }
+
+            const members = membersByRoom?.[conversation.name] || [];
+
+            const onlineCount = members.filter(
+                (member) => presenceByUser[member.name] === true
+            ).length;
+
+            return {
+                ...conversation,
+                memberCount: members.length,
+                onlineCount,
+                membersLoaded: Array.isArray(membersByRoom?.[conversation.name]),
+            };
+        });
+    }, [conversationsWithStatus, membersByRoom, presenceByUser]);
 
     const personalConversations = conversations.filter(
         (conversation) => Number(conversation.type) === 0
@@ -754,6 +782,80 @@ function MainLayout() {
         });
     }, [users, usersLoading, labelAssignments]);
 
+    useEffect(() => {
+        if (usersLoading || users.length === 0) return;
+
+        const groupRooms = users.filter(
+            (user) =>
+                Number(user.type) === 1 &&
+                user.name?.trim()
+        );
+
+        const uniqueRooms = [
+            ...new Map(
+                groupRooms.map((room) => [
+                    room.name.trim(),
+                    room,
+                ])
+            ).values(),
+        ];
+
+        const roomsToLoad = uniqueRooms.filter((room) => {
+            const roomName = room.name.trim();
+
+            const alreadyLoaded = Array.isArray(
+                membersByRoom?.[roomName]
+            );
+
+            const alreadyRequested =
+                requestedRoomMembersRef.current.has(roomName);
+
+            return !alreadyLoaded && !alreadyRequested;
+        });
+
+        if (roomsToLoad.length === 0) return;
+
+        let cancelled = false;
+
+        const loadRoomMembers = async () => {
+            for (let i = 0; i < roomsToLoad.length; i += 5) {
+                if (cancelled) break;
+
+                const batch = roomsToLoad.slice(i, i + 5);
+
+                const requests = batch.map(async (room) => {
+                    const roomName = room.name.trim();
+
+                    requestedRoomMembersRef.current.add(roomName);
+
+                    try {
+                        await dispatch(
+                            fetchRoomMembers({ name: roomName })
+                        ).unwrap();
+
+                        console.log(
+                            `[GROUP MEMBERS] Loaded: ${roomName}`
+                        );
+                    } catch (error) {
+                        requestedRoomMembersRef.current.delete(roomName);
+
+                        console.error(
+                            `[GROUP MEMBERS] Failed: ${roomName}`,
+                            error
+                        );
+                    }
+                });
+
+                await Promise.allSettled(requests);
+            }
+        };
+
+        loadRoomMembers();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [users, usersLoading, membersByRoom, dispatch]);
 
     useEffect(() => {
         const unsubscribe = on("SEND_CHAT", (packet) => {
@@ -898,7 +1000,7 @@ function MainLayout() {
             <Sidebar theme={theme} onToggleTheme={toggleTheme} />
 
             <ConversationList
-                conversations={conversationsWithStatus}
+                conversations={conversationsWithGroupPresence}
                 groupConversations={groupConversations}
                 activeId={activeId}
                 onSelect={handleSelectConversation}
