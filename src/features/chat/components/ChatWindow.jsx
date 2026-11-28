@@ -14,7 +14,6 @@ import {
     Image,
     Plus,
     Pin,
-    Pencil,
     PinOff,
     Check,
     Trash2,
@@ -118,7 +117,6 @@ function getFileType(fileName) {
 
 function ChatWindow({
     conversation,
-    onlineStatus,
     messages,
     currentUser,
     onSendMessage,
@@ -177,6 +175,9 @@ function ChatWindow({
     const deletedMessageIds = useSelector(
         (state) =>
             state.chat.deletedMessagesByUser?.[conversation?.name] || []
+    );
+    const presenceByUser = useSelector(
+        (state) => state.presence.byUser
     );
     useEffect(() => {
         setSelectedAttachments([]);
@@ -667,56 +668,41 @@ function ChatWindow({
                         </button>
 
                         <div className="chat-user-info">
-                            <div className="chat-header-avatar">
-                                {Number(conversation.type) === 1 ? (
-                                    <Users size={24} />
-                                ) : conversation.avatar ? (
-                                    <img
-                                        src={conversation.avatar}
-                                        alt={conversation.name}
-                                    />
-                                ) : (
-                                    <UserRound size={24} />
-                                )}
 
-                                {conversation.status === "online" && (
+                        <div className="chat-header-avatar">
+                            {Number(conversation.type) === 1 ? (
+                                <Users size={24} />
+                            ) : conversation.avatar ? (
+                                <img
+                                    src={conversation.avatar}
+                                    alt={conversation.name}
+                                />
+                            ) : (
+                                <UserRound size={24} />
+                            )}
+
+                            {Number(conversation.type) === 0 &&
+                                conversation.status === "online" && (
                                     <span className="online-indicator"></span>
                                 )}
-                            </div>
+                        </div>
 
                             <div className="chat-user-details">
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <h3 title={conversation.customName || conversation.name} style={{ margin: 0 }}>
                                         {conversation.customName || conversation.name}
                                     </h3>
-
-
-                                    <button
-                                        type="button"
-                                        className="icon-button"
-                                        title="Đổi tên nhóm"
-                                        onClick={() => {
-                                            setNewGroupName(conversation.customName || conversation.name || '');
-                                            setIsRenameModalOpen(true);
-                                        }}
-                                        style={{
-                                            background: 'transparent',
-                                            border: 'none',
-                                            cursor: 'pointer',
-                                            padding: '4px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            color: '#666',
-                                            borderRadius: '4px'
-                                        }}
-                                    >
-                                        ✏️
-                                    </button>
                                 </div>
 
-                                <p style={{ margin: 0 }}>
-                                    {conversation.status === "online" ? "Active now" : "Offline"}
-                                </p>
+                                {Number(conversation.type) === 0 && (
+                                    <p style={{ margin: 0 }}>
+                                        {conversation.status === "online"
+                                            ? "Active now"
+                                            : conversation.status === "offline"
+                                                ? "Offline"
+                                                : "Đang kiểm tra..."}
+                                    </p>
+                                )}
                             </div>
 
                             {isRenameModalOpen && (
@@ -925,6 +911,10 @@ function ChatWindow({
                                             {!isMine && (
                                                 <div className="message-avatar message-avatar-fallback">
                                                     {item.senderId?.charAt(0).toUpperCase() || "?"}
+
+                                                    {presenceByUser[item.senderId] === true && (
+                                                        <span className="online-indicator"></span>
+                                                    )}
                                                 </div>
                                             )}
 

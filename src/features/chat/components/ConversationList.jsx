@@ -293,7 +293,7 @@ function ConversationList({
                         }`}
                     onClick={() => setSelectedLabelId("all")}
                 >
-                    Tất cả
+                    All
                 </button>
 
                 {labels.map((label) => (
@@ -411,7 +411,7 @@ function ConversationList({
                                             )}
 
                                             {Number(conversation.type) === 0 &&
-                                                onlineStatuses?.[conversation.name?.trim()] === "online" && (
+                                                conversation.status === "online" && (
                                                     <span className="online-indicator"></span>
                                                 )}
                                         </div>
