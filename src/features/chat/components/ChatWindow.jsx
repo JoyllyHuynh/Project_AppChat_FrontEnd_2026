@@ -121,6 +121,7 @@ function ChatWindow({
     currentUser,
     onSendMessage,
     onBack,
+    onUpdateConversationName,
 }) {
     const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
     const [message, setMessage] = useState("");
@@ -1264,6 +1265,12 @@ function ChatWindow({
                         onAddMember={() => setIsAddMemberOpen(true)}
                         onRemoveMember={(memberName) => {
                             console.log("Remove member:", memberName);
+                        }}
+                        onRenameRoom={(newName) => {
+                            const roomId = conversation.id || conversation._id;
+                            if (typeof onUpdateConversationName === "function") {
+                                onUpdateConversationName(roomId, newName);
+                            }
                         }}
                     />
                 )}

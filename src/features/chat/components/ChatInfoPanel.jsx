@@ -1,9 +1,29 @@
-import React, { useState } from 'react';
-import { Bell, Pin, UserPlus, Settings, ChevronDown, ChevronUp, Users } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Bell, Pin, UserPlus, Settings, ChevronDown, ChevronUp, Users, Pencil, Check, X } from 'lucide-react';
 import '../../../styles/chat-info-panel.css';
 
-export const ChatInfoPanel = ({ roomName, members = [], onAddMember, onRemoveMember }) => {
+export const ChatInfoPanel = ({ roomName, members = [], onAddMember, onRemoveMember, onRenameRoom }) => {
   const [isMembersOpen, setIsMembersOpen] = useState(true);
+
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [draftName, setDraftName] = useState(roomName || '');
+
+  useEffect(() => {
+    setDraftName(roomName || '');
+    setIsEditingName(false);
+  }, [roomName]);
+
+  const handleSaveName = () => {
+    const trimmed = draftName.trim();
+    if (!trimmed) return;
+    onRenameRoom && onRenameRoom(trimmed);
+    setIsEditingName(false);
+  };
+
+  const handleCancelEdit = () => {
+    setDraftName(roomName || '');
+    setIsEditingName(false);
+  };
 
   return (
     <div className="chat-info-panel">
@@ -13,7 +33,43 @@ export const ChatInfoPanel = ({ roomName, members = [], onAddMember, onRemoveMem
         <div className="chat-info-avatar-group">
           <Users size={32} color="#0068ff" />
         </div>
-        <div className="chat-info-group-name">{roomName || 'Nhóm chat'}</div>
+        {isEditingName ? (
+          <div className="chat-info-rename-box">
+            <input
+              type="text"
+              className="chat-info-rename-input"
+              value={draftName}
+              onChange={(e) => setDraftName(e.target.value)}
+              placeholder="Nhập tên nhóm mới..."
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSaveName();
+                if (e.key === 'Escape') handleCancelEdit();
+              }}
+            />
+            <button type="button" className="chat-info-rename-btn save" title="Lưu" onClick={handleSaveName}>
+              <Check size={15} />
+            </button>
+            <button type="button" className="chat-info-rename-btn cancel" title="Hủy" onClick={handleCancelEdit}>
+              <X size={15} />
+            </button>
+          </div>
+        ) : (
+          <div className="chat-info-name-row">
+            <span className="chat-info-group-name">{roomName || 'Nhóm chat'}</span>
+            <button
+              type="button"
+              className="chat-info-edit-name-btn"
+              title="Đổi tên nhóm"
+              onClick={() => {
+                setDraftName(roomName || '');
+                setIsEditingName(true);
+              }}
+            >
+              <Pencil size={14} />
+            </button>
+          </div>
+        )}
 
         <div className="chat-info-actions">
           <button className="chat-action-btn-item" title="Tắt thông báo">
@@ -35,10 +91,10 @@ export const ChatInfoPanel = ({ roomName, members = [], onAddMember, onRemoveMem
         </div>
       </div>
 
-    
+
       <div className="chat-info-section">
-        <div 
-          className="chat-section-header" 
+        <div
+          className="chat-section-header"
           onClick={() => setIsMembersOpen(!isMembersOpen)}
         >
           <span>Thành viên nhóm ({members.length})</span>
@@ -53,15 +109,15 @@ export const ChatInfoPanel = ({ roomName, members = [], onAddMember, onRemoveMem
               members.map((member, index) => (
                 <div key={index} className="member-item">
                   <div className="member-info">
-                    <img 
-                      src={member.avatar || `https://i.pravatar.cc/150?u=${encodeURIComponent(member.name || member)}`} 
-                      alt="avatar" 
-                      className="member-avatar" 
+                    <img
+                      src={member.avatar || `https://i.pravatar.cc/150?u=${encodeURIComponent(member.name || member)}`}
+                      alt="avatar"
+                      className="member-avatar"
                     />
                     <span className="member-name">{member.name || member}</span>
                   </div>
-                  <button 
-                    className="remove-member-btn" 
+                  <button
+                    className="remove-member-btn"
                     onClick={() => onRemoveMember && onRemoveMember(member.name || member)}
                   >
                     Xóa
