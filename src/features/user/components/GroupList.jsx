@@ -40,7 +40,6 @@ const readGroupsFromLocalStorage = () => {
             candidates.push(...parsed.conversations);
           }
         } catch {
-          // bỏ qua giá trị không phải JSON
         }
       }
     }
@@ -83,9 +82,9 @@ export const GroupList = () => {
     const list = !keyword
       ? groups
       : groups.filter((group) => {
-          const displayName = String(group.customName || group.name || "").toLowerCase();
-          return displayName.includes(keyword);
-        });
+        const displayName = String(group.customName || group.name || "").toLowerCase();
+        return displayName.includes(keyword);
+      });
 
     return [...list].sort((a, b) => {
       const nameA = String(a.customName || a.name || "");
@@ -121,7 +120,7 @@ export const GroupList = () => {
     <section className="group-list-page">
       <div className="group-list-header">
         <h2 className="group-list-title">
-          Danh sách nhóm và cộng đồng ({filteredGroups.length})
+          List groups and Communities ({filteredGroups.length})
         </h2>
 
         <div className="group-search-box">

@@ -146,7 +146,7 @@ export const FriendList = () => {
     <aside className="friend-sidebar">
       <div className="friend-sidebar-header">
         <h2 className="friend-sidebar-title">
-          Danh sách bạn bè ({usersWithStatus.length})
+          Friend List ({usersWithStatus.length})
         </h2>
 
         <div className="friend-search-wrapper">
